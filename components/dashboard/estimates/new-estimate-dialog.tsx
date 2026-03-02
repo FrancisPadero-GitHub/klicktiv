@@ -123,6 +123,9 @@ export function NewEstimateDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { data: technicians = [] } = useFetchTechnicians(); // for the dropdown select
+  const activeTechnicians = technicians.filter(
+    (technician) => technician.deleted_at === null,
+  );
   const { data: jobs = [] } = useFetchViewJobRow();
   const {
     mutate: addEstimate,
@@ -428,7 +431,9 @@ export function NewEstimateDialog({
             >
               <div className="overflow-y-auto flex-1 grid gap-4 py-2 pl-2 pr-1">
                 <div className="grid gap-2">
-                  <Label htmlFor="work_title">Work Title <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="work_title">
+                    Work Title <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="work_title"
                     placeholder="e.g. HVAC System Inspection"
@@ -444,7 +449,9 @@ export function NewEstimateDialog({
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="technician_id">Technician <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="technician_id">
+                    Technician <span className="text-red-500">*</span>
+                  </Label>
                   <Controller
                     name="technician_id"
                     control={control}
@@ -453,19 +460,26 @@ export function NewEstimateDialog({
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
+                        disabled={isPending || activeTechnicians.length === 0}
                       >
                         <SelectTrigger id="technician_id">
                           <SelectValue placeholder="Select technician" />
                         </SelectTrigger>
                         <SelectContent>
-                          {technicians.map((technician) => (
-                            <SelectItem
-                              key={technician.id}
-                              value={technician.id}
-                            >
-                              {technician.name}
+                          {activeTechnicians.length > 0 ? (
+                            activeTechnicians.map((technician) => (
+                              <SelectItem
+                                key={technician.id}
+                                value={technician.id}
+                              >
+                                {technician.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="__no_technician__" disabled>
+                              No technician available
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
                     )}
@@ -479,7 +493,9 @@ export function NewEstimateDialog({
 
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="grid gap-2">
-                    <Label htmlFor="work_order_date">Work Order Date <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="work_order_date">
+                      Work Order Date <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="work_order_date"
                       type="date"
@@ -495,7 +511,9 @@ export function NewEstimateDialog({
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="estimated_amount">Estimated Amount <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="estimated_amount">
+                      Estimated Amount <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="estimated_amount"
                       type="number"
@@ -519,18 +537,30 @@ export function NewEstimateDialog({
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="grid gap-2">
                     <Label htmlFor="category">Category</Label>
-                    <Input id="category" placeholder="e.g. HVAC, Plumbing" {...register("category")} />
+                    <Input
+                      id="category"
+                      placeholder="e.g. HVAC, Plumbing"
+                      {...register("category")}
+                    />
                   </div>
 
                   <div className="grid gap-2">
                     <Label htmlFor="region">Region</Label>
-                    <Input id="region" placeholder="e.g. North, Downtown" {...register("region")} />
+                    <Input
+                      id="region"
+                      placeholder="e.g. North, Downtown"
+                      {...register("region")}
+                    />
                   </div>
                 </div>
 
                 <div className="grid gap-2">
                   <Label htmlFor="address">Address</Label>
-                  <Input id="address" placeholder="e.g. 123 Main St, Suite 4" {...register("address")} />
+                  <Input
+                    id="address"
+                    placeholder="e.g. 123 Main St, Suite 4"
+                    {...register("address")}
+                  />
                 </div>
 
                 <div className="grid gap-2">
@@ -545,7 +575,9 @@ export function NewEstimateDialog({
 
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="grid gap-2">
-                    <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="status">
+                      Status <span className="text-red-500">*</span>
+                    </Label>
                     <Controller
                       name="status"
                       control={control}

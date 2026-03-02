@@ -71,6 +71,9 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
   // TanStack Query data
   const { data: technicians = [] } = useFetchTechnicians();
   const { data: paymentMethods = [] } = useFetchPaymentMethods();
+  const activeTechnicians = technicians.filter(
+    (technician) => technician.deleted_at === null,
+  );
 
   // TanStack Query mutations
   const {
@@ -381,7 +384,7 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
                         Technician <span className="text-red-500">*</span>
                       </Label>
                       <Select
-                        disabled={isPending}
+                        disabled={isPending || activeTechnicians.length === 0}
                         value={watch("technician_id")}
                         onValueChange={(v) =>
                           setValue("technician_id", v, { shouldDirty: true })
@@ -391,11 +394,17 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
                           <SelectValue placeholder="Select technician" />
                         </SelectTrigger>
                         <SelectContent>
-                          {technicians.map((t) => (
-                            <SelectItem key={t.id} value={t.id ?? ""}>
-                              {t.name}
+                          {activeTechnicians.length > 0 ? (
+                            activeTechnicians.map((t) => (
+                              <SelectItem key={t.id} value={t.id ?? ""}>
+                                {t.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="__no_technician__" disabled>
+                              No technician available
                             </SelectItem>
-                          ))}
+                          )}
                         </SelectContent>
                       </Select>
                       <input
