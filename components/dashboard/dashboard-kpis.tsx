@@ -4,7 +4,6 @@ import {
   TrendingUp,
   Briefcase,
   Users,
-  FileText,
   DollarSign,
   Percent,
   Wrench,

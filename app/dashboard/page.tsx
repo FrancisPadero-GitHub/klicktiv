@@ -19,23 +19,32 @@ export default function DashboardPage() {
   const isAdmin = profile?.role === "admin";
 
   const {
+    // Query states
+    // isLoading,
+    // isError,
+    // errorMessage,
     kpisState,
     revenueTrendState,
     monthlyComparisonState,
     techRevenueState,
     profitSplitState,
     recentJobsState,
+
+    // Raw data
+    jobs,
+    recentJobs,
+    // techSummaries,
+    technicians,
+    techNameMap,
+    // techCommissionMap,
+    activeTech,
+
+    // Computed data
     metrics,
     dailyRevenue,
     monthlyBreakdown,
     techRevenue,
     profitSplit,
-    jobs,
-    recentJobs,
-    techNameMap,
-    techSummaries,
-    technicians,
-    activeTech,
   } = useDashboardData();
 
   return (
