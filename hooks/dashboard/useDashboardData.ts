@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import Decimal from "decimal.js";
+import { useAuth } from "@/components/auth-provider";
 import {
   useDashboardFilterStore,
   toJobsSummaryFilter,
@@ -56,6 +57,11 @@ export interface ProfitSplit {
  * and computes all metrics using decimal.js for precision.
  */
 export function useDashboardData() {
+  const { session, isLoading: isAuthLoading } = useAuth();
+  const companyId = session?.user?.app_metadata?.company_id as
+    | string
+    | undefined;
+
   const mode = useDashboardFilterStore((s) => s.mode);
   const year = useDashboardFilterStore((s) => s.year);
   const month = useDashboardFilterStore((s) => s.month);
@@ -88,16 +94,23 @@ export function useDashboardData() {
     (t) => t.deleted_at == null,
   );
 
+  const missingCompany = !isAuthLoading && !companyId;
+
   const isLoading =
+    isAuthLoading ||
     jobsQuery.isLoading ||
     techSummaryQuery.isLoading ||
     techniciansQuery.isLoading;
   const isError =
-    jobsQuery.isError || techSummaryQuery.isError || techniciansQuery.isError;
-  const errorMessage =
-    jobsQuery.error?.message ??
-    techSummaryQuery.error?.message ??
-    techniciansQuery.error?.message;
+    missingCompany ||
+    jobsQuery.isError ||
+    techSummaryQuery.isError ||
+    techniciansQuery.isError;
+  const errorMessage = missingCompany
+    ? "Company ID is missing from user session"
+    : (jobsQuery.error?.message ??
+      techSummaryQuery.error?.message ??
+      techniciansQuery.error?.message);
 
   const kpisState = {
     isLoading,

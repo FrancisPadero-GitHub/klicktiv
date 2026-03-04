@@ -123,6 +123,7 @@ export function useCreateUser() {
           username: username?.trim() || null,
           avatar_url: avatar_url?.trim() || null,
           website: website?.trim() || null,
+          company_id: companyId,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" },

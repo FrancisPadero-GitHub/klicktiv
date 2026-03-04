@@ -1,14 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
 type TechnicianRow = Database["public"]["Tables"]["technicians"]["Row"];
 
-const dbSoftDeleteTechnician = async (id: string) => {
+const dbSoftDeleteTechnician = async (id: string, companyId: string) => {
   const { data: result, error } = await supabase
     .from("technicians")
     .update({ deleted_at: new Date().toISOString() })
     .eq("id", id)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -19,11 +21,12 @@ const dbSoftDeleteTechnician = async (id: string) => {
   return result as TechnicianRow;
 };
 
-const dbRestoreTechnician = async (id: string) => {
+const dbRestoreTechnician = async (id: string, companyId: string) => {
   const { data: result, error } = await supabase
     .from("technicians")
     .update({ deleted_at: null })
     .eq("id", id)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -61,8 +64,20 @@ const invalidateTechnicianRelatedQueries = async (
 
 export function useDelTechnician() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+
   return useMutation<TechnicianRow, Error, string>({
-    mutationFn: dbSoftDeleteTechnician,
+    mutationFn: async (id) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbSoftDeleteTechnician(id, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Technician soft-deleted successfully:", result);
       await invalidateTechnicianRelatedQueries(queryClient);
@@ -75,8 +90,20 @@ export function useDelTechnician() {
 
 export function useRestoreTechnician() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+
   return useMutation<TechnicianRow, Error, string>({
-    mutationFn: dbRestoreTechnician,
+    mutationFn: async (id) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbRestoreTechnician(id, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Technician restored successfully:", result);
       await invalidateTechnicianRelatedQueries(queryClient);

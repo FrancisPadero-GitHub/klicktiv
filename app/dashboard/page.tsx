@@ -11,12 +11,11 @@ import { RecentJobsTable } from "@/components/dashboard/jobs/recent-jobs-table";
 import { DashboardExportButton } from "@/components/dashboard/dashboard-export-button";
 import { QueryStatePanel } from "@/components/misc/query-state-panel";
 import { useAuth } from "@/components/auth-provider";
-import { useFetchRole } from "@/hooks/auth/useFetchRole";
 
 export default function DashboardPage() {
-  const { user } = useAuth();
-  const { data: profile } = useFetchRole(user?.id);
-  const isAdmin = profile?.role === "admin";
+  const { role } = useAuth();
+
+  const isAdmin = role === "company";
 
   const {
     // Query states

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -12,7 +13,10 @@ export interface EditEstimatePayload {
   workOrderUpdates?: WorkOrderUpdate;
 }
 
-const dbEditEstimate = async (payload: EditEstimatePayload) => {
+const dbEditEstimate = async (
+  payload: EditEstimatePayload,
+  companyId: string,
+) => {
   const hasEstimateUpdates =
     payload.estimateUpdates && Object.keys(payload.estimateUpdates).length > 0;
   const hasWorkOrderUpdates =
@@ -30,6 +34,7 @@ const dbEditEstimate = async (payload: EditEstimatePayload) => {
       .from("estimates")
       .update(payload.estimateUpdates)
       .eq("work_order_id", payload.estimateId)
+      .eq("company_id", companyId)
       .select()
       .single();
 
@@ -45,6 +50,7 @@ const dbEditEstimate = async (payload: EditEstimatePayload) => {
       .from("work_orders")
       .update(payload.workOrderUpdates)
       .eq("id", payload.estimateId)
+      .eq("company_id", companyId)
       .select()
       .single();
 
@@ -67,9 +73,20 @@ const dbEditEstimate = async (payload: EditEstimatePayload) => {
 
 export function useEditEstimate() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   return useMutation({
-    mutationFn: dbEditEstimate,
+    mutationFn: async (payload: EditEstimatePayload) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbEditEstimate(payload, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Estimate edited successfully:", result);
       await queryClient.invalidateQueries({

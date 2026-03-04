@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -6,11 +7,12 @@ export type TechnicianUpdate =
   Database["public"]["Tables"]["technicians"]["Update"];
 export type TechnicianRow = Database["public"]["Tables"]["technicians"]["Row"];
 
-const dbEditTechnician = async (data: TechnicianUpdate) => {
+const dbEditTechnician = async (data: TechnicianUpdate, companyId: string) => {
   const { data: result, error } = await supabase
     .from("technicians")
     .update(data)
     .eq("id", data.id)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -23,8 +25,20 @@ const dbEditTechnician = async (data: TechnicianUpdate) => {
 
 export function useEditTechnician() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+
   return useMutation<TechnicianRow, Error, TechnicianUpdate>({
-    mutationFn: dbEditTechnician,
+    mutationFn: async (data) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbEditTechnician(data, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Technician edited successfully:", result);
       await queryClient.invalidateQueries({

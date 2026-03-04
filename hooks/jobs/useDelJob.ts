@@ -1,14 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 
-const dbSoftDeleteJob = async (workOrderId: string) => {
+const dbSoftDeleteJob = async (workOrderId: string, companyId: string) => {
   const now = new Date().toISOString();
 
   // Soft delete the job record
   const { error: jobError } = await supabase
     .from("jobs")
     .update({ deleted_at: now })
-    .eq("work_order_id", workOrderId);
+    .eq("work_order_id", workOrderId)
+    .eq("company_id", companyId);
 
   if (jobError) {
     throw new Error(jobError.message || "Failed to delete job");
@@ -19,6 +21,7 @@ const dbSoftDeleteJob = async (workOrderId: string) => {
     .from("work_orders")
     .update({ deleted_at: now })
     .eq("id", workOrderId)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -31,8 +34,20 @@ const dbSoftDeleteJob = async (workOrderId: string) => {
 
 export function useDelJob() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+
   return useMutation({
-    mutationFn: dbSoftDeleteJob,
+    mutationFn: async (workOrderId: string) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbSoftDeleteJob(workOrderId, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Job soft-deleted successfully:", result);
       await queryClient.invalidateQueries({

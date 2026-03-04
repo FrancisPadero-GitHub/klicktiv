@@ -1,16 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
 type WorkOrderRow = Database["public"]["Tables"]["work_orders"]["Row"];
 
-const dbSoftDeleteEstimate = async (workOrderId: string) => {
+const dbSoftDeleteEstimate = async (workOrderId: string, companyId: string) => {
   const now = new Date().toISOString();
 
   const { error: estimateError } = await supabase
     .from("estimates")
     .update({ deleted_at: now })
-    .eq("work_order_id", workOrderId);
+    .eq("work_order_id", workOrderId)
+    .eq("company_id", companyId);
 
   if (estimateError) {
     throw new Error(estimateError.message || "Failed to delete estimate");
@@ -19,7 +21,8 @@ const dbSoftDeleteEstimate = async (workOrderId: string) => {
   const { error: jobError } = await supabase
     .from("jobs")
     .update({ deleted_at: now })
-    .eq("work_order_id", workOrderId);
+    .eq("work_order_id", workOrderId)
+    .eq("company_id", companyId);
 
   if (jobError) {
     throw new Error(jobError.message || "Failed to delete related job");
@@ -29,6 +32,7 @@ const dbSoftDeleteEstimate = async (workOrderId: string) => {
     .from("work_orders")
     .update({ deleted_at: now })
     .eq("id", workOrderId)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -41,9 +45,20 @@ const dbSoftDeleteEstimate = async (workOrderId: string) => {
 
 export function useDelEstimate() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   return useMutation<WorkOrderRow, Error, string>({
-    mutationFn: dbSoftDeleteEstimate,
+    mutationFn: async (workOrderId: string) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbSoftDeleteEstimate(workOrderId, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Estimate soft-deleted successfully:", result);
       await queryClient.invalidateQueries({

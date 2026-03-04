@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -11,10 +12,13 @@ export type TechnicianDetailRow =
  * so that I can determine which ones are deleted and show them differently in the UI.
  */
 
-export const fetchTechnicians = async (): Promise<TechnicianDetailRow[]> => {
+export const fetchTechnicians = async (
+  companyId: string,
+): Promise<TechnicianDetailRow[]> => {
   const { data: result, error } = await supabase
     .from("technicians")
     .select("*")
+    .eq("company_id", companyId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -25,9 +29,21 @@ export const fetchTechnicians = async (): Promise<TechnicianDetailRow[]> => {
 };
 
 export function useFetchTechnicians() {
+  const { session } = useAuth();
+  const companyId = session?.user?.app_metadata?.company_id as
+    | string
+    | undefined;
+
   return useQuery<TechnicianDetailRow[], Error>({
-    queryKey: ["technicians", "details"],
-    queryFn: fetchTechnicians,
+    queryKey: ["technicians", "details", companyId ?? null],
+    queryFn: () => {
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return fetchTechnicians(companyId);
+    },
+    enabled: Boolean(companyId),
     staleTime: 1000 * 60 * 2,
     retry: 1,
   });

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -6,12 +7,13 @@ type ReviewRecordUpdate =
   Database["public"]["Tables"]["review_records"]["Update"];
 type ReviewRecordRow = Database["public"]["Tables"]["review_records"]["Row"];
 
-const dbDelReviewRecord = async (id: string) => {
+const dbDelReviewRecord = async (id: string, companyId: string) => {
   // Soft-delete the review record
   const { data: result, error } = await supabase
     .from("review_records")
     .update({ deleted_at: new Date().toISOString() } as ReviewRecordUpdate)
     .eq("id", id)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -23,7 +25,8 @@ const dbDelReviewRecord = async (id: string) => {
   const { error: workOrderError } = await supabase
     .from("work_orders")
     .update({ review_id: null })
-    .eq("review_id", id);
+    .eq("review_id", id)
+    .eq("company_id", companyId);
 
   if (workOrderError) {
     throw new Error(
@@ -36,8 +39,20 @@ const dbDelReviewRecord = async (id: string) => {
 
 export function useDelReviewRecord() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+
   return useMutation<ReviewRecordRow, Error, string>({
-    mutationFn: dbDelReviewRecord,
+    mutationFn: async (id) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbDelReviewRecord(id, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Review record deleted successfully:", result);
       // Invalidate review-related queries

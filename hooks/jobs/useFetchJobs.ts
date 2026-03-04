@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -129,9 +130,10 @@ const resolveDateRange = (filter?: JobsSummaryFilter): ResolvedDateRange => {
 
 // Data fetching function
 export const fetchJobs = async (
+  companyId: string,
   filter?: JobsSummaryFilter,
 ): Promise<VJobsRow[]> => {
-  let query = supabase.from("v_jobs").select("*");
+  let query = supabase.from("v_jobs").select("*").eq("company_id", companyId);
 
   const { startDate, endDate } = resolveDateRange(filter);
   if (startDate) query = query.gte("work_order_date", startDate);
@@ -149,9 +151,21 @@ export const fetchJobs = async (
 };
 
 export function useFetchJobDetailed(filter?: JobsSummaryFilter) {
+  const { session } = useAuth();
+  const companyId = session?.user?.app_metadata?.company_id as
+    | string
+    | undefined;
+
   return useQuery<VJobsRow[], Error>({
-    queryKey: ["jobs", "table-detailed", filter ?? null],
-    queryFn: () => fetchJobs(filter),
+    queryKey: ["jobs", "table-detailed", companyId ?? null, filter ?? null],
+    queryFn: () => {
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return fetchJobs(companyId, filter);
+    },
+    enabled: Boolean(companyId),
     staleTime: 1000 * 60 * 2, // 2 minutes
     retry: 1,
   });

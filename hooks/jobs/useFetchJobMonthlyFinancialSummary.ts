@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -48,14 +49,27 @@ const computeMonthlySummary = (jobs: VJobsRow[]): MonthlyFinancialSummary[] => {
 export const useFetchJobMonthlyFinancialSummary = (
   initialData?: MonthlyFinancialSummary[],
 ) => {
+  const { session } = useAuth();
+  const companyId = session?.user?.app_metadata?.company_id as
+    | string
+    | undefined;
+
   return useQuery({
-    queryKey: ["job-monthly-financial-summary"],
+    queryKey: ["job-monthly-financial-summary", companyId ?? null],
     queryFn: async () => {
-      const { data, error } = await supabase.from("v_jobs").select("*");
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      const { data, error } = await supabase
+        .from("v_jobs")
+        .select("*")
+        .eq("company_id", companyId);
 
       if (error) throw error;
       return computeMonthlySummary((data as VJobsRow[]) || []);
     },
+    enabled: Boolean(companyId),
     initialData,
     staleTime: 5 * 60 * 1000,
   });

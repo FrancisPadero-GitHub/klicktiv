@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -11,12 +12,13 @@ export interface EditJobPayload {
   job: JobUpdate;
 }
 
-const dbEditJob = async (payload: EditJobPayload) => {
+const dbEditJob = async (payload: EditJobPayload, companyId: string) => {
   // Update the work order
   const { error: woError } = await supabase
     .from("work_orders")
     .update(payload.workOrder)
-    .eq("id", payload.workOrderId);
+    .eq("id", payload.workOrderId)
+    .eq("company_id", companyId);
 
   if (woError) {
     throw new Error(woError.message || "Failed to update work order");
@@ -27,6 +29,7 @@ const dbEditJob = async (payload: EditJobPayload) => {
     .from("jobs")
     .update(payload.job)
     .eq("work_order_id", payload.workOrderId)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -39,8 +42,20 @@ const dbEditJob = async (payload: EditJobPayload) => {
 
 export function useEditJob() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+
   return useMutation({
-    mutationFn: dbEditJob,
+    mutationFn: async (payload: EditJobPayload) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbEditJob(payload, companyId);
+    },
     onSuccess: async (result) => {
       console.log("Job edited successfully:", result);
       await queryClient.invalidateQueries({

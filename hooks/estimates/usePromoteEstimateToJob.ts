@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
 
@@ -13,7 +14,10 @@ export interface PromoteEstimateToJobPayload {
   job: Omit<JobInsert, "work_order_id">;
 }
 
-const dbPromoteEstimateToJob = async (payload: PromoteEstimateToJobPayload) => {
+const dbPromoteEstimateToJob = async (
+  payload: PromoteEstimateToJobPayload,
+  companyId: string,
+) => {
   if (
     payload.workOrderUpdates &&
     Object.keys(payload.workOrderUpdates).length
@@ -21,7 +25,8 @@ const dbPromoteEstimateToJob = async (payload: PromoteEstimateToJobPayload) => {
     const { error: workOrderError } = await supabase
       .from("work_orders")
       .update(payload.workOrderUpdates)
-      .eq("id", payload.workOrderId);
+      .eq("id", payload.workOrderId)
+      .eq("company_id", companyId);
 
     if (workOrderError) {
       throw new Error(workOrderError.message || "Failed to update work order");
@@ -34,6 +39,7 @@ const dbPromoteEstimateToJob = async (payload: PromoteEstimateToJobPayload) => {
       [
         {
           ...payload.job,
+          company_id: companyId,
           work_order_id: payload.workOrderId,
           deleted_at: null,
         },
@@ -51,6 +57,7 @@ const dbPromoteEstimateToJob = async (payload: PromoteEstimateToJobPayload) => {
     .from("estimates")
     .update(payload.estimateUpdates)
     .eq("work_order_id", payload.workOrderId)
+    .eq("company_id", companyId)
     .select()
     .single();
 
@@ -58,7 +65,8 @@ const dbPromoteEstimateToJob = async (payload: PromoteEstimateToJobPayload) => {
     await supabase
       .from("jobs")
       .delete()
-      .eq("work_order_id", payload.workOrderId);
+      .eq("work_order_id", payload.workOrderId)
+      .eq("company_id", companyId);
     throw new Error(
       estimateError.message || "Failed to update estimate status",
     );
@@ -72,9 +80,20 @@ const dbPromoteEstimateToJob = async (payload: PromoteEstimateToJobPayload) => {
 
 export function usePromoteEstimateToJob() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   return useMutation({
-    mutationFn: dbPromoteEstimateToJob,
+    mutationFn: async (payload: PromoteEstimateToJobPayload) => {
+      const companyId = session?.user?.app_metadata?.company_id as
+        | string
+        | undefined;
+
+      if (!companyId) {
+        throw new Error("Company ID is missing from user session");
+      }
+
+      return dbPromoteEstimateToJob(payload, companyId);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["estimates"],
