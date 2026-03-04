@@ -73,6 +73,10 @@ export interface TechJobDetailGroup {
 
 export interface DashboardExportReport {
   title: string;
+  company: {
+    id: string;
+    name: string;
+  };
   scopeLabel: string;
   reportingPeriod: string;
   generatedAt: string;
@@ -87,6 +91,10 @@ interface BuildReportInput {
   technicians: TechnicianDetailRow[];
   techNameMap?: Map<string, string>;
   scopeLabel: string;
+  company: {
+    id: string;
+    name?: string | null;
+  };
 }
 
 const MONTHS = [
@@ -149,10 +157,22 @@ const formatPeriod = (dates: Date[]) => {
   return `${format(min)} — ${format(max)}`;
 };
 
-const makeFileName = (format: ExportFormat, scopeLabel: string) => {
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const makeFileName = (
+  format: ExportFormat,
+  scopeLabel: string,
+  companyName: string,
+) => {
   const date = new Date().toISOString().slice(0, 10);
-  const scope = scopeLabel.toLowerCase().replace(/\s+/g, "-");
-  return `dashboard-financial-report-${scope}-${date}.${
+  const scope = slugify(scopeLabel);
+  const company = slugify(companyName || "unknown-company");
+  return `dashboard-financial-report-${company}-${scope}-${date}.${
     format === "excel" ? "xlsx" : "pdf"
   }`;
 };
@@ -162,7 +182,10 @@ export function buildDashboardExportReport({
   technicians,
   techNameMap,
   scopeLabel,
+  company,
 }: BuildReportInput): DashboardExportReport {
+  const companyName = company.name?.trim() || "Unknown Company";
+
   const doneJobs = jobs.filter((job) => job.status === "done");
 
   const commissionMap = new Map<string, number>();
@@ -342,7 +365,11 @@ export function buildDashboardExportReport({
     }));
 
   return {
-    title: "SALARIUM FINANCIAL REPORT",
+    title: `${companyName.toUpperCase()} - SALARIUM FINANCIAL REPORT`,
+    company: {
+      id: company.id,
+      name: companyName,
+    },
     scopeLabel,
     reportingPeriod: formatPeriod(periodDates),
     generatedAt: new Date().toLocaleString("en-US"),
@@ -428,7 +455,7 @@ export async function exportDashboardReportAsExcel(
   // ── Subtitle ───────────────────────────────────────────────────────────────
   set(
     0,
-    `Scope: ${report.scopeLabel}   |   Reporting Period: ${report.reportingPeriod}   |   Generated: ${report.generatedAt}`,
+    `Company: ${report.company.name} (${report.company.id})   |   Scope: ${report.scopeLabel}   |   Reporting Period: ${report.reportingPeriod}   |   Generated: ${report.generatedAt}`,
     {
       fill: { fgColor: { rgb: MED_BLUE } },
       font: { italic: true, color: { rgb: WHITE }, sz: 9, name: "Calibri" },
@@ -758,7 +785,7 @@ export async function exportDashboardReportAsExcel(
     new Blob([output], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
-    makeFileName("excel", report.scopeLabel),
+    makeFileName("excel", report.scopeLabel, report.company.name),
   );
 }
 
@@ -839,7 +866,7 @@ export async function exportDashboardReportAsPdf(
     52,
     22,
     [20, 60, 80] as [number, number, number],
-    `Reporting Period: ${report.reportingPeriod}   ·   Scope: ${report.scopeLabel}   ·   Generated: ${report.generatedAt}`,
+    `Company: ${report.company.name} (${report.company.id})   ·   Reporting Period: ${report.reportingPeriod}   ·   Scope: ${report.scopeLabel}   ·   Generated: ${report.generatedAt}`,
     { size: 7.5, color: MINT_MID },
   );
 
@@ -1093,7 +1120,7 @@ export async function exportDashboardReportAsPdf(
     61,
     16,
     [20, 83, 82] as [number, number, number],
-    `${report.monthlyRows.length} Month${report.monthlyRows.length !== 1 ? "s" : ""}   ·   ${totalMonthJobs} Total Jobs   ·   ${fmtCurrency(totalMonthGross)} Total Gross   ·   Scope: ${report.scopeLabel}`,
+    `${report.monthlyRows.length} Month${report.monthlyRows.length !== 1 ? "s" : ""}   ·   ${totalMonthJobs} Total Jobs   ·   ${fmtCurrency(totalMonthGross)} Total Gross   ·   Company: ${report.company.name}`,
     { size: 7.5, color: MINT_MID },
   );
 
@@ -1228,5 +1255,5 @@ export async function exportDashboardReportAsPdf(
     });
   }
 
-  doc.save(makeFileName("pdf", report.scopeLabel));
+  doc.save(makeFileName("pdf", report.scopeLabel, report.company.name));
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
+import { useFetchCompany } from "@/hooks/company/useFetchCompany";
 import { fetchJobs, type VJobsRow } from "@/hooks/jobs/useFetchJobs";
 import type { TechnicianDetailRow } from "@/hooks/technicians/useFetchTechnicians";
 import {
@@ -43,6 +44,7 @@ export function DashboardExportButton({
   const companyId = session?.user?.app_metadata?.company_id as
     | string
     | undefined;
+  const companyQuery = useFetchCompany(companyId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat | null>(
@@ -57,6 +59,10 @@ export function DashboardExportButton({
 
   const runExport = async (scope: "current" | "all") => {
     if (!selectedFormat) return;
+    if (!companyId) {
+      toast.error("Company ID is missing from user session");
+      return;
+    }
 
     setIsExporting(true);
     try {
@@ -64,9 +70,6 @@ export function DashboardExportButton({
         scope === "current"
           ? currentJobs
           : await (async () => {
-              if (!companyId) {
-                throw new Error("Company ID is missing from user session");
-              }
               return fetchJobs(companyId, { mode: "all" });
             })();
 
@@ -75,6 +78,10 @@ export function DashboardExportButton({
         technicians,
         techNameMap,
         scopeLabel: scope === "current" ? "Current Filter" : "All Records",
+        company: {
+          id: companyId,
+          name: companyQuery.data?.name,
+        },
       });
 
       if (selectedFormat === "excel") {

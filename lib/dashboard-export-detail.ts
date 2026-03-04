@@ -94,7 +94,7 @@ export function buildTechJobDetailSheet(
 
   set(
     0,
-    `Reporting Period: ${report.reportingPeriod}   |   Generated: ${report.generatedAt}`,
+    `Company: ${report.company.name} (${report.company.id})   |   Reporting Period: ${report.reportingPeriod}   |   Generated: ${report.generatedAt}`,
     {
       fill: { fgColor: { rgb: MED_BLUE } },
       font: { italic: true, color: { rgb: WHITE }, sz: 9, name: "Calibri" },
@@ -248,7 +248,7 @@ export function appendPdfTechJobDetailPages({
       47,
       20,
       [20, 60, 80],
-      `${group.technician.toUpperCase()}  ·  ${group.splitLabel}  ·  ${group.jobs.length} Jobs   —   ${report.reportingPeriod}`,
+      `${report.company.name} (${report.company.id})  ·  ${group.technician.toUpperCase()}  ·  ${group.splitLabel}  ·  ${group.jobs.length} Jobs   —   ${report.reportingPeriod}`,
       { size: 7.5, color: MINT_MID },
     );
 
