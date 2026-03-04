@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -60,7 +61,8 @@ export function useDelEstimate() {
       return dbSoftDeleteEstimate(workOrderId, companyId);
     },
     onSuccess: async (result) => {
-      console.log("Estimate soft-deleted successfully:", result);
+      void result;
+      toast.success("Estimate deleted successfully");
       await queryClient.invalidateQueries({
         queryKey: ["estimates"],
         exact: false,
@@ -83,7 +85,9 @@ export function useDelEstimate() {
       });
     },
     onError: (error) => {
-      console.error("Error soft-deleting estimate:", error.message || error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete estimate",
+      );
     },
   });
 }

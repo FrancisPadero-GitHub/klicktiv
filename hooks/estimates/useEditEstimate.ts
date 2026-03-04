@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -88,7 +89,8 @@ export function useEditEstimate() {
       return dbEditEstimate(payload, companyId);
     },
     onSuccess: async (result) => {
-      console.log("Estimate edited successfully:", result);
+      void result;
+      toast.success("Estimate updated successfully");
       await queryClient.invalidateQueries({
         queryKey: ["estimates"],
         exact: false,
@@ -107,7 +109,9 @@ export function useEditEstimate() {
       });
     },
     onError: (error) => {
-      console.error("Error editing estimate:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update estimate",
+      );
     },
   });
 }

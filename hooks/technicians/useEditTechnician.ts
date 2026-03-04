@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -40,7 +41,8 @@ export function useEditTechnician() {
       return dbEditTechnician(data, companyId);
     },
     onSuccess: async (result) => {
-      console.log("Technician edited successfully:", result);
+      void result;
+      toast.success("Technician updated successfully");
       await queryClient.invalidateQueries({
         queryKey: ["technicians"],
         exact: false,
@@ -63,7 +65,7 @@ export function useEditTechnician() {
       });
     },
     onError: (error) => {
-      console.error("Error editing technician:", error.message || error);
+      toast.error(error.message || "Failed to update technician");
     },
   });
 }

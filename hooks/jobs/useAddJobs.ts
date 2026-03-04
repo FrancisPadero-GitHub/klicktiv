@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -65,7 +66,8 @@ export function useAddJob() {
       });
     },
     onSuccess: async (result) => {
-      console.log("Job added successfully:", result);
+      void result;
+      toast.success("Job added successfully");
       await queryClient.invalidateQueries({
         queryKey: ["jobs"],
         exact: false,
@@ -88,7 +90,7 @@ export function useAddJob() {
       });
     },
     onError: (error: Error) => {
-      console.error("Error adding job:", error.message || error);
+      toast.error(error.message || "Failed to add job");
     },
   });
 }

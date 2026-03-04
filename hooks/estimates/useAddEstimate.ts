@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -64,6 +65,7 @@ export function useAddEstimate() {
       });
     },
     onSuccess: async () => {
+      toast.success("Estimate added successfully");
       await queryClient.invalidateQueries({
         queryKey: ["estimates"],
         exact: false,
@@ -82,7 +84,7 @@ export function useAddEstimate() {
       });
     },
     onError: (error: Error) => {
-      console.error("Error adding estimate:", error.message || error);
+      toast.error(error.message || "Failed to add estimate");
     },
   });
 }

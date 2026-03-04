@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -79,11 +80,12 @@ export function useDelTechnician() {
       return dbSoftDeleteTechnician(id, companyId);
     },
     onSuccess: async (result) => {
-      console.log("Technician soft-deleted successfully:", result);
+      void result;
+      toast.success("Technician removed successfully");
       await invalidateTechnicianRelatedQueries(queryClient);
     },
     onError: (error) => {
-      console.error("Error deleting technician:", error.message || error);
+      toast.error(error.message || "Failed to remove technician");
     },
   });
 }
@@ -105,11 +107,12 @@ export function useRestoreTechnician() {
       return dbRestoreTechnician(id, companyId);
     },
     onSuccess: async (result) => {
-      console.log("Technician restored successfully:", result);
+      void result;
+      toast.success("Technician restored successfully");
       await invalidateTechnicianRelatedQueries(queryClient);
     },
     onError: (error) => {
-      console.error("Error restoring technician:", error.message || error);
+      toast.error(error.message || "Failed to restore technician");
     },
   });
 }

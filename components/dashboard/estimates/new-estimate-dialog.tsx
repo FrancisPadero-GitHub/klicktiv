@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -130,32 +131,22 @@ export function NewEstimateDialog({
   const {
     mutate: addEstimate,
     isPending: isAdding,
-    isSuccess: isAddSuccess,
-    isError: isAddError,
-    error: addError,
     reset: resetAddMutation,
   } = useAddEstimate();
   const {
     mutate: editEstimate,
     isPending: isEditing,
-    isSuccess: isEditSuccess,
-    isError: isEditError,
-    error: editError,
     reset: resetEditMutation,
   } = useEditEstimate();
   const {
     mutate: promoteEstimateToJob,
     isPending: isPromoting,
-    isError: isPromoteError,
     error: promoteError,
     reset: resetPromoteMutation,
   } = usePromoteEstimateToJob();
   const {
     mutate: deleteEstimate,
     isPending: isDeletePending,
-    isSuccess: isDeleteSuccess,
-    isError: isDeleteError,
-    error: deleteError,
     reset: resetDeleteMutation,
   } = useDelEstimate();
 
@@ -227,6 +218,9 @@ export function NewEstimateDialog({
       onSuccess: () => {
         setIsConfirmDeleteOpen(false);
         closeDialog();
+      },
+      onError: (err) => {
+        toast.error(err.message || "Failed to hide estimate");
       },
     });
   };
@@ -382,13 +376,6 @@ export function NewEstimateDialog({
   };
 
   const isPending = isAdding || isEditing || isPromoting || isDeletePending;
-  const isSuccess = isAddSuccess || isEditSuccess || isDeleteSuccess;
-  const isError = isAddError || isEditError || isPromoteError || isDeleteError;
-  const errorMessage =
-    addError?.message ||
-    editError?.message ||
-    promoteError?.message ||
-    deleteError?.message;
   const title = mode === "edit" ? "Edit Estimate" : "New Estimate";
   const description =
     mode === "edit"
@@ -410,264 +397,254 @@ export function NewEstimateDialog({
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
 
-          {isSuccess ? (
-            isDeleteSuccess ? (
-              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300">
-                Estimate hidden successfully.
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            <div className="overflow-y-auto flex-1 grid gap-4 py-2 pl-2 pr-1">
+              <div className="grid gap-2">
+                <Label htmlFor="work_title">
+                  Work Title <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="work_title"
+                  placeholder="e.g. HVAC System Inspection"
+                  {...register("work_title", {
+                    required: "Work title is required",
+                  })}
+                />
+                {errors.work_title ? (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {errors.work_title.message}
+                  </p>
+                ) : null}
               </div>
-            ) : (
-              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300">
-                Estimate saved successfully.
+
+              <div className="grid gap-2">
+                <Label htmlFor="technician_id">
+                  Technician <span className="text-red-500">*</span>
+                </Label>
+                <Controller
+                  name="technician_id"
+                  control={control}
+                  rules={{ required: "Technician is required" }}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isPending || activeTechnicians.length === 0}
+                    >
+                      <SelectTrigger id="technician_id">
+                        <SelectValue
+                          placeholder={
+                            activeTechnicians.length === 0
+                              ? "No technician available"
+                              : "Select technician"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeTechnicians.length > 0 ? (
+                          activeTechnicians.map((technician) => (
+                            <SelectItem
+                              key={technician.id}
+                              value={technician.id}
+                            >
+                              {technician.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="__no_technician__" disabled>
+                            No technician available
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.technician_id ? (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {errors.technician_id.message}
+                  </p>
+                ) : null}
               </div>
-            )
-          ) : isError ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-900/20 dark:text-red-300">
-              {errorMessage ?? "Failed to save estimate."}
-            </div>
-          ) : (
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex flex-col flex-1 min-h-0"
-            >
-              <div className="overflow-y-auto flex-1 grid gap-4 py-2 pl-2 pr-1">
+
+              <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-2">
-                  <Label htmlFor="work_title">
-                    Work Title <span className="text-red-500">*</span>
+                  <Label htmlFor="work_order_date">
+                    Work Order Date <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="work_title"
-                    placeholder="e.g. HVAC System Inspection"
-                    {...register("work_title", {
-                      required: "Work title is required",
+                    id="work_order_date"
+                    type="date"
+                    {...register("work_order_date", {
+                      required: "Work order date is required",
                     })}
                   />
-                  {errors.work_title ? (
+                  {errors.work_order_date ? (
                     <p className="text-xs text-red-600 dark:text-red-400">
-                      {errors.work_title.message}
+                      {errors.work_order_date.message}
                     </p>
                   ) : null}
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="technician_id">
-                    Technician <span className="text-red-500">*</span>
+                  <Label htmlFor="estimated_amount">
+                    Estimated Amount <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="estimated_amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    {...register("estimated_amount", {
+                      valueAsNumber: true,
+                      required: "Estimated amount is required",
+                      min: { value: 0, message: "Must be 0 or higher" },
+                    })}
+                  />
+                  {errors.estimated_amount ? (
+                    <p className="text-xs text-red-600 dark:text-red-400">
+                      {errors.estimated_amount.message}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    placeholder="e.g. HVAC, Plumbing"
+                    {...register("category")}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="region">Region</Label>
+                  <Input
+                    id="region"
+                    placeholder="e.g. North, Downtown"
+                    {...register("region")}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  placeholder="e.g. 123 Main St, Suite 4"
+                  {...register("address")}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  rows={3}
+                  placeholder="Describe the scope of work for this estimate..."
+                  {...register("description")}
+                />
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="status">
+                    Status <span className="text-red-500">*</span>
                   </Label>
                   <Controller
-                    name="technician_id"
+                    name="status"
                     control={control}
-                    rules={{ required: "Technician is required" }}
                     render={({ field }) => (
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
-                        disabled={isPending || activeTechnicians.length === 0}
+                        disabled={
+                          isPending ||
+                          (isAlreadyPromoted && field.value === "approved")
+                        }
                       >
-                        <SelectTrigger id="technician_id">
-                          <SelectValue placeholder="Select technician" />
+                        <SelectTrigger id="status">
+                          <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                          {activeTechnicians.length > 0 ? (
-                            activeTechnicians.map((technician) => (
-                              <SelectItem
-                                key={technician.id}
-                                value={technician.id}
-                              >
-                                {technician.name}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="__no_technician__" disabled>
-                              No technician available
-                            </SelectItem>
-                          )}
+                          <SelectItem value="follow_up">Follow Up</SelectItem>
+                          <SelectItem
+                            value="approved"
+                            disabled={isAlreadyPromoted}
+                          >
+                            Approved
+                          </SelectItem>
+                          <SelectItem value="denied">Denied</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
                   />
-                  {errors.technician_id ? (
-                    <p className="text-xs text-red-600 dark:text-red-400">
-                      {errors.technician_id.message}
+                  {isAlreadyPromoted ? (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      This estimate is already promoted to a job.
                     </p>
                   ) : null}
                 </div>
 
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label htmlFor="work_order_date">
-                      Work Order Date <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="work_order_date"
-                      type="date"
-                      {...register("work_order_date", {
-                        required: "Work order date is required",
-                      })}
-                    />
-                    {errors.work_order_date ? (
-                      <p className="text-xs text-red-600 dark:text-red-400">
-                        {errors.work_order_date.message}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="estimated_amount">
-                      Estimated Amount <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="estimated_amount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="0.00"
-                      {...register("estimated_amount", {
-                        valueAsNumber: true,
-                        required: "Estimated amount is required",
-                        min: { value: 0, message: "Must be 0 or higher" },
-                      })}
-                    />
-                    {errors.estimated_amount ? (
-                      <p className="text-xs text-red-600 dark:text-red-400">
-                        {errors.estimated_amount.message}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label htmlFor="category">Category</Label>
-                    <Input
-                      id="category"
-                      placeholder="e.g. HVAC, Plumbing"
-                      {...register("category")}
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="region">Region</Label>
-                    <Input
-                      id="region"
-                      placeholder="e.g. North, Downtown"
-                      {...register("region")}
-                    />
-                  </div>
-                </div>
-
                 <div className="grid gap-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="handled_by">Handled By</Label>
                   <Input
-                    id="address"
-                    placeholder="e.g. 123 Main St, Suite 4"
-                    {...register("address")}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    rows={3}
-                    placeholder="Describe the scope of work for this estimate..."
-                    {...register("description")}
-                  />
-                </div>
-
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label htmlFor="status">
-                      Status <span className="text-red-500">*</span>
-                    </Label>
-                    <Controller
-                      name="status"
-                      control={control}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          disabled={
-                            isPending ||
-                            (isAlreadyPromoted && field.value === "approved")
-                          }
-                        >
-                          <SelectTrigger id="status">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="follow_up">Follow Up</SelectItem>
-                            <SelectItem
-                              value="approved"
-                              disabled={isAlreadyPromoted}
-                            >
-                              Approved
-                            </SelectItem>
-                            <SelectItem value="denied">Denied</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                    {isAlreadyPromoted ? (
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                        This estimate is already promoted to a job.
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="handled_by">Handled By</Label>
-                    <Input
-                      id="handled_by"
-                      placeholder="e.g. John Doe"
-                      {...register("handled_by")}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Jot down important note here"
-                    rows={2}
-                    {...register("notes")}
+                    id="handled_by"
+                    placeholder="e.g. John Doe"
+                    {...register("handled_by")}
                   />
                 </div>
               </div>
 
-              <DialogFooter className="flex-row items-center justify-between sm:justify-between pt-5">
-                {mode === "edit" ? (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => setIsConfirmDeleteOpen(true)}
-                    disabled={isPending || !selectedEstimate?.work_order_id}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4 " />
-                    Delete
-                  </Button>
-                ) : null}
-                <div className="ml-auto flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      closeDialog();
-                    }}
-                    disabled={isPending}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isPending || !isDirty}>
-                    {isPending
-                      ? "Saving..."
-                      : mode === "edit"
-                        ? "Update Estimate"
-                        : "Save Estimate"}
-                  </Button>
-                </div>
-              </DialogFooter>
-            </form>
-          )}
+              <div className="grid gap-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Jot down important note here"
+                  rows={2}
+                  {...register("notes")}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="flex-row items-center justify-between sm:justify-between pt-5">
+              {mode === "edit" ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setIsConfirmDeleteOpen(true)}
+                  disabled={isPending || !selectedEstimate?.work_order_id}
+                >
+                  <Trash2 className="mr-2 h-4 w-4 " />
+                  Delete
+                </Button>
+              ) : null}
+              <div className="ml-auto flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    closeDialog();
+                  }}
+                  disabled={isPending}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isPending || !isDirty}>
+                  {isPending
+                    ? "Saving..."
+                    : mode === "edit"
+                      ? "Update Estimate"
+                      : "Save Estimate"}
+                </Button>
+              </div>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

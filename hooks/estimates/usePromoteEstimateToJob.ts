@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -95,6 +96,7 @@ export function usePromoteEstimateToJob() {
       return dbPromoteEstimateToJob(payload, companyId);
     },
     onSuccess: async () => {
+      toast.success("Estimate promoted to job successfully");
       await queryClient.invalidateQueries({
         queryKey: ["estimates"],
         exact: false,
@@ -117,7 +119,7 @@ export function usePromoteEstimateToJob() {
       });
     },
     onError: (error: Error) => {
-      console.error("Error promoting estimate to job:", error.message || error);
+      toast.error(error.message || "Failed to promote estimate to job");
     },
   });
 }

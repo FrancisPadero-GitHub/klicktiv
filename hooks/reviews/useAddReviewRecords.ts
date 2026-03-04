@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
@@ -41,7 +42,8 @@ export function useAddReviewRecord() {
       });
     },
     onSuccess: async (result) => {
-      console.log("Review record added successfully:", result);
+      void result;
+      toast.success("Review record added successfully");
       // Invalidate review-related queries
       await queryClient.invalidateQueries({
         queryKey: ["reviews", "review-records"],
@@ -80,7 +82,7 @@ export function useAddReviewRecord() {
       });
     },
     onError: (error) => {
-      console.error("Error adding review record:", error.message || error);
+      toast.error(error.message || "Failed to add review record");
     },
   });
 }

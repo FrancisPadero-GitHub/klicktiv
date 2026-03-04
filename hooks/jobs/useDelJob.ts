@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
 import { supabase } from "@/lib/supabase";
 
@@ -49,7 +50,8 @@ export function useDelJob() {
       return dbSoftDeleteJob(workOrderId, companyId);
     },
     onSuccess: async (result) => {
-      console.log("Job soft-deleted successfully:", result);
+      void result;
+      toast.success("Job deleted successfully");
       await queryClient.invalidateQueries({
         queryKey: ["jobs"],
         exact: false,
@@ -72,7 +74,7 @@ export function useDelJob() {
       });
     },
     onError: (error: Error) => {
-      console.error("Error soft-deleting job:", error.message || error);
+      toast.error(error.message || "Failed to delete job");
     },
   });
 }
