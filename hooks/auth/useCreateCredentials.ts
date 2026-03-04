@@ -35,6 +35,12 @@ type CreateUserResponse = {
 export function useCreateUser() {
   const { session } = useAuth();
 
+  const company_id = session?.user?.app_metadata?.company_id;
+
+  if (company_id === undefined) {
+    throw new Error("Company ID is missing from user session");
+  }
+
   return useMutation({
     mutationFn: async ({
       email,
@@ -70,21 +76,26 @@ export function useCreateUser() {
           body: JSON.stringify({
             email,
             password,
+            company_id,
           }),
         },
       );
 
+      // Read the response body as text
       const text = await response.text();
       let json: CreateUserResponse = {};
 
+      // Attempt to parse the response as JSON
       if (text) {
         try {
           json = JSON.parse(text) as CreateUserResponse;
         } catch {
+          // If parsing fails, fallback to an empty object
           json = {};
         }
       }
 
+      // If the response is not OK, throw an error with details from the response
       if (!response.ok) {
         throw new Error(
           json?.error ||
@@ -93,11 +104,13 @@ export function useCreateUser() {
         );
       }
 
+      // Extract the new user's ID from the response
       const newUserId = json?.data?.user?.id ?? json?.user?.id;
       if (!newUserId) {
         throw new Error("Failed to get new user UID from Edge Function");
       }
 
+      // Upsert the user's profile in the Supabase 'profiles' table
       const { error: profileError } = await supabase.from("profiles").upsert(
         {
           id: newUserId,
@@ -113,18 +126,35 @@ export function useCreateUser() {
         { onConflict: "id" },
       );
 
+      // Handle any errors from the profile upsert
       if (profileError) {
         throw new Error(profileError.message || "Failed to insert profile");
       }
 
+      // Insert the user into the 'company_users' table to link them to the company
+      const { error: companyUsers } = await supabase
+        .from("company_users")
+        .insert({
+          company_id,
+          user_id: newUserId,
+          role: profileRole,
+        });
+
+      // Handle any errors from the company_users insert
+      if (companyUsers) {
+        throw new Error(
+          companyUsers.message || "Failed to insert company user",
+        );
+      }
+
+      // Return the created user data, including profile ID and role
       return {
         ...json.data,
         profile_id: newUserId,
-        created_role: role,
       };
     },
     onSuccess: () => {
-      console.log("User created successfully:");
+      console.log("User created successfully");
     },
     onError: (error) => {
       console.error(

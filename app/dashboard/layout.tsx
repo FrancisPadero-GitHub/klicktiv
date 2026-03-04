@@ -21,7 +21,6 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { ProtectedRoute } from "@/components/protected-route";
 import { useAuth } from "@/components/auth-provider";
 import { useLogout } from "@/hooks/auth/useLogout";
-import { useFetchRole } from "@/hooks/auth/useFetchRole";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -52,12 +51,13 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Auth to determine which nav items to show and whether to allow access to certain routes
-  const { user } = useAuth();
-  const { data: profile, isLoading: isRoleLoading } = useFetchRole(user?.id);
+  const { user, role, isLoading: isRoleLoading } = useAuth();
+
   const logoutMutation = useLogout();
 
   // Admins can see all nav items; non-admins have some items hidden and are redirected if they try to access those routes
-  const isAdmin = profile?.role === "admin" || profile?.role === "super_admin";
+  const isAdmin = role === "company" || role === "super_admin";
+
   const isRestrictedRoute =
     pathname.startsWith("/dashboard/technicians") ||
     pathname.startsWith("/dashboard/settings");

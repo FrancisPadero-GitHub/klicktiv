@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 import { useFetchProfiles } from "@/hooks/auth/useFetchRole";
 import { QueryStatePanel } from "@/components/misc/query-state-panel";
-import { CreateLoginCredentials } from "@/components/dashboard/settings/create-login-credentials";
+import { CreateLoginCredentials } from "@/components/dashboard/settings/create-va";
 
 function RoleBadge({ role }: { role: string | null }) {
   const isAdmin = role === "admin";
@@ -119,7 +119,9 @@ export function ProfilesTable() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <RoleBadge role={profile.role} />
+                        <RoleBadge
+                          role={profile.role === "user" ? "VA" : "—"}
+                        />
                       </TableCell>
                       <TableCell>
                         <RoleBadge role={profile.email} />

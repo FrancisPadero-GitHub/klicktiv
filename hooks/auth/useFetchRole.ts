@@ -7,6 +7,8 @@ export type ProfilesRow = Database["public"]["Tables"]["profiles"]["Row"];
 export const profileQueryKey = (userId?: string) =>
   ["profiles", "me", userId ?? "anonymous"] as const;
 
+// Deprecated
+// use the role from the session instead of fetching the profile for every user
 export const fetchProfileById = async (
   userId: string,
 ): Promise<ProfilesRow | null> => {
@@ -23,6 +25,8 @@ export const fetchProfileById = async (
   return result as ProfilesRow | null;
 };
 
+// Deprecated
+// use the role from the session instead of fetching the profile for every user
 export function useFetchRole(userId?: string) {
   return useQuery<ProfilesRow | null, Error>({
     queryKey: profileQueryKey(userId),
