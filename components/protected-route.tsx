@@ -21,10 +21,8 @@ export function ProtectedRoute({
   children,
   redirectTo = "/auth/login",
 }: ProtectedRouteProps) {
-  const { user, isLoading, session } = useAuth();
-  console.log("ProtectedRoute session:", session);
+  const { user, isLoading } = useAuth();
   const router = useRouter();
-
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace(redirectTo);

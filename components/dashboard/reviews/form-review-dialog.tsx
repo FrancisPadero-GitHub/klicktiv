@@ -319,7 +319,7 @@ export function AddEditReviewDialog({
                 <SelectTrigger id="job_id" className="w-full">
                   <SelectValue placeholder="Select a completed job…" />
                 </SelectTrigger>
-                <SelectContent className="max-h-50 overflow-y-auto">
+                <SelectContent className="max-h-64 overflow-y-auto">
                   {jobOptions.length === 0 ? (
                     <div className="px-3 py-5 text-center text-xs text-zinc-400">
                       {mode === "add"

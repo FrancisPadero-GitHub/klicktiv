@@ -18,7 +18,6 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { ProtectedRoute } from "@/components/protected-route";
 import { useAuth } from "@/components/auth-provider";
 import { useLogout } from "@/hooks/auth/useLogout";
-import { useFetchRole } from "@/hooks/auth/useFetchRole";
 
 const navItems = [
   { href: "/super-admin", label: "Overview", icon: LayoutDashboard },
