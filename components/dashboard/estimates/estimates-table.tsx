@@ -44,6 +44,13 @@ import { EstimateDeleteAlert } from "@/components/dashboard/estimates/estimate-d
 
 export type EstimatesRowWithNotes = EstimatesRow & { notes?: string | null };
 
+// helpers
+
+const shortId = (value: string | null) => {
+  if (!value) return "";
+  return value.slice(0, 8);
+};
+
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     n,
@@ -353,6 +360,7 @@ export function EstimatesTable({
             <TableRow className="sticky top-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-900">
               {(
                 [
+                  { key: "work_id", label: "ID" },
                   { key: "work_order_date" as SortKey, label: "Date" },
                   { key: "work_title" as SortKey, label: "Work Title" },
                   { key: "address" as SortKey, label: "Address" },
@@ -406,6 +414,9 @@ export function EstimatesTable({
                     }}
                     className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
                   >
+                    <TableCell className="whitespace-nowrap  text-zinc-500 dark:text-zinc-400">
+                      {shortId(estimate.work_order_id ?? "—")}
+                    </TableCell>
                     {/* Date */}
                     <TableCell className="whitespace-nowrap text-zinc-500 dark:text-zinc-400">
                       {estimate.work_order_date

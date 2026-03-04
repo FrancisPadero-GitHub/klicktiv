@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogClose,
@@ -115,6 +116,8 @@ export function JobViewDialog({
   onEdit,
   onDelete,
 }: JobViewDialogProps) {
+  const router = useRouter();
+
   if (!job) return null;
 
   const statusKey = (job.status ?? "pending").toLowerCase();
@@ -330,6 +333,34 @@ export function JobViewDialog({
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Delete
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => {
+                  onOpenChange(false);
+                  if (hasReview && job.review_id) {
+                    const params = new URLSearchParams({
+                      highlightReviewId: job.review_id,
+                    });
+                    router.push(`/dashboard/reviews?${params.toString()}`);
+                    return;
+                  }
+
+                  if (job.work_order_id) {
+                    const params = new URLSearchParams({
+                      open: "add",
+                      jobId: job.work_order_id,
+                    });
+                    router.push(`/dashboard/reviews?${params.toString()}`);
+                  } else {
+                    router.push("/dashboard/reviews?open=add");
+                  }
+                }}
+              >
+                <Star className="h-3.5 w-3.5" />
+                Review
               </Button>
               <Button
                 size="sm"

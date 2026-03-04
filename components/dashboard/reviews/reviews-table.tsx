@@ -1,6 +1,7 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { QueryStatePanel } from "@/components/misc/query-state-panel";
@@ -69,9 +70,10 @@ type DynamicFilter = "all" | (string & {});
 
 interface ReviewsTableProps {
   onEdit: (record: ReviewRecordRow) => void;
+  highlightReviewId?: string | null;
 }
 
-export function ReviewsTable({ onEdit }: ReviewsTableProps) {
+export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
   const {
     data: records = [],
     isLoading,
@@ -93,6 +95,22 @@ export function ReviewsTable({ onEdit }: ReviewsTableProps) {
     useState<DynamicFilter>("all");
   const [paymentFilter, setPaymentFilter] = useState<DynamicFilter>("all");
   const [showFilters, setShowFilters] = useState(true);
+  const [activeHighlightId, setActiveHighlightId] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!highlightReviewId) return;
+    setActiveHighlightId(highlightReviewId);
+
+    const timeout = window.setTimeout(() => {
+      setActiveHighlightId((current) =>
+        current === highlightReviewId ? null : current,
+      );
+    }, 5000);
+
+    return () => window.clearTimeout(timeout);
+  }, [highlightReviewId]);
 
   const reviewTypes = useMemo(
     () =>
@@ -189,6 +207,17 @@ export function ReviewsTable({ onEdit }: ReviewsTableProps) {
     reviewTypeFilter,
     paymentFilter,
   ]);
+
+  useEffect(() => {
+    if (!activeHighlightId) return;
+
+    const targetRow = document.getElementById(
+      `review-row-${activeHighlightId}`,
+    );
+    if (targetRow) {
+      targetRow.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [filtered, activeHighlightId]);
 
   function handleSort(k: SortKey) {
     if (sortKey === k) {
@@ -371,11 +400,21 @@ export function ReviewsTable({ onEdit }: ReviewsTableProps) {
                 filtered.map((record) => (
                   <TableRow
                     key={record.review_id}
+                    id={
+                      record.review_id
+                        ? `review-row-${record.review_id}`
+                        : undefined
+                    }
                     onClick={() => {
                       setViewRecord(record);
                       setViewOpen(true);
                     }}
-                    className="cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    className={cn(
+                      "cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
+                      activeHighlightId &&
+                        record.review_id === activeHighlightId &&
+                        "bg-amber-50 ring-1 ring-inset ring-amber-300 dark:bg-amber-950/30 dark:ring-amber-700",
+                    )}
                   >
                     {/* Date */}
                     <TableCell className="whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">

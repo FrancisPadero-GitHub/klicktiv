@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { ReviewSummaryCards } from "@/components/dashboard/reviews/review-summary-cards";
 import { ReviewsTable } from "@/components/dashboard/reviews/reviews-table";
@@ -12,20 +13,40 @@ type ReviewRecordViewRow =
   Database["public"]["Views"]["v_review_records"]["Row"];
 
 export default function ReviewsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const highlightReviewId = searchParams.get("highlightReviewId");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [selectedReview, setSelectedReview] =
     useState<ReviewRecordViewRow | null>(null);
+  const [prefilledJobId, setPrefilledJobId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const open = searchParams.get("open");
+    const jobId = searchParams.get("jobId");
+
+    if (open !== "add") return;
+
+    setSelectedReview(null);
+    setDialogMode("add");
+    setPrefilledJobId(jobId);
+    setIsDialogOpen(true);
+
+    router.replace("/dashboard/reviews", { scroll: false });
+  }, [router, searchParams]);
 
   const handleOpenAddDialog = () => {
     setSelectedReview(null);
     setDialogMode("add");
+    setPrefilledJobId(null);
     setIsDialogOpen(true);
   };
 
   const handleOpenEditDialog = (review: ReviewRecordViewRow) => {
     setSelectedReview(review);
     setDialogMode("edit");
+    setPrefilledJobId(null);
     setIsDialogOpen(true);
   };
 
@@ -52,13 +73,17 @@ export default function ReviewsPage() {
         mode={dialogMode}
         selectedReview={selectedReview}
         onOpenChange={setIsDialogOpen}
+        prefilledJobId={prefilledJobId}
       />
 
       {/* Summary Cards */}
       <ReviewSummaryCards />
 
       {/* Reviews Table */}
-      <ReviewsTable onEdit={handleOpenEditDialog} />
+      <ReviewsTable
+        onEdit={handleOpenEditDialog}
+        highlightReviewId={highlightReviewId}
+      />
     </div>
   );
 }

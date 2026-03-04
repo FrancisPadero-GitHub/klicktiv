@@ -34,11 +34,10 @@ export default function SuperAdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user } = useAuth();
-  const { data: profile, isLoading: isRoleLoading } = useFetchRole(user?.id);
+  const { user, role, isLoading: isRoleLoading } = useAuth();
   const logoutMutation = useLogout();
 
-  const isSuperAdmin = profile?.role === "super_admin";
+  const isSuperAdmin = role === "super_admin";
 
   useEffect(() => {
     if (!isRoleLoading && user && !isSuperAdmin) {

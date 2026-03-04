@@ -391,7 +391,13 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
                         }
                       >
                         <SelectTrigger id="job-technician" className="w-full">
-                          <SelectValue placeholder="Select technician" />
+                          <SelectValue
+                            placeholder={
+                              activeTechnicians.length === 0
+                                ? "No technician available"
+                                : "Select technician"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {activeTechnicians.length > 0 ? (

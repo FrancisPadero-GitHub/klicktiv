@@ -47,6 +47,13 @@ import { type ViewJobsRow } from "@/hooks/jobs/useFetchJobTable";
 import { JobViewDialog } from "@/components/dashboard/jobs/job-view-dialog";
 import { JobDeleteAlert } from "@/components/dashboard/jobs/job-delete-alert";
 
+// helpers
+
+const shortId = (value: string | null) => {
+  if (!value) return "";
+  return value.slice(0, 8);
+};
+
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     n,
@@ -423,6 +430,7 @@ export function JobsTable() {
               <TableRow className="sticky top-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-900">
                 {(
                   [
+                    { key: "work_id", label: "ID" },
                     { key: "work_title", label: "Job Name" },
                     { key: "work_order_date", label: "Date" },
                     { key: "address", label: "Address" },
@@ -505,6 +513,9 @@ export function JobsTable() {
                           "bg-amber-50 ring-1 ring-inset ring-amber-300 dark:bg-amber-950/30 dark:ring-amber-700",
                       )}
                     >
+                      <TableCell className="whitespace-nowrap  text-zinc-500 dark:text-zinc-400">
+                        {shortId(job.work_order_id ?? "—")}
+                      </TableCell>
                       {/* Job Name */}
                       <TableCell className=" font-medium text-zinc-800 dark:text-zinc-200">
                         {job.work_title ?? "—"}

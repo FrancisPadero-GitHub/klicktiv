@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Trash2, Briefcase, CalendarDays, MapPin } from "lucide-react";
+import {
+  Trash2,
+  Briefcase,
+  CalendarDays,
+  MapPin,
+  Globe,
+  FileText,
+  Receipt,
+  TrendingUp,
+  Package,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -56,11 +66,26 @@ const fmt = (n: number) =>
     n,
   );
 
+const fmtDate = (value: string | null) => {
+  if (!value) return "";
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const shortId = (value: string | null) => {
+  if (!value) return "";
+  return value.slice(0, 8);
+};
+
 interface AddEditReviewDialogProps {
   open: boolean;
   mode: "add" | "edit";
   selectedReview: ReviewRecordViewRow | null;
   onOpenChange: (open: boolean) => void;
+  prefilledJobId?: string | null;
 }
 
 export function AddEditReviewDialog({
@@ -68,6 +93,7 @@ export function AddEditReviewDialog({
   mode,
   selectedReview,
   onOpenChange,
+  prefilledJobId,
 }: AddEditReviewDialogProps) {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
@@ -180,18 +206,30 @@ export function AddEditReviewDialog({
     resetForm({
       amount: 0,
       review_date: new Date().toISOString().split("T")[0],
-      job_id: "",
+      job_id: prefilledJobId ?? "",
       review_type_id: "",
       notes: "",
       payment_method_id: null,
     });
+
+    if (mode === "add" && prefilledJobId) {
+      const picked = unreviewedJobs.find(
+        (job) => job.work_order_id === prefilledJobId,
+      );
+      if (picked?.work_order_date) {
+        setValue("review_date", picked.work_order_date);
+      }
+    }
   }, [
     open,
     mode,
     selectedReview,
+    prefilledJobId,
     reviewTypes,
     paymentMethods,
+    unreviewedJobs,
     resetForm,
+    setValue,
     resetAddMutation,
     resetEditMutation,
     resetDelMutation,
@@ -281,7 +319,7 @@ export function AddEditReviewDialog({
                 <SelectTrigger id="job_id" className="w-full">
                   <SelectValue placeholder="Select a completed job…" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-50 overflow-y-auto">
                   {jobOptions.length === 0 ? (
                     <div className="px-3 py-5 text-center text-xs text-zinc-400">
                       {mode === "add"
@@ -293,22 +331,33 @@ export function AddEditReviewDialog({
                       <SelectItem
                         key={job.work_order_id}
                         value={job.work_order_id || ""}
+                        textValue={
+                          job.work_title || `Job ${shortId(job.work_order_id)}`
+                        }
                       >
-                        <span className="font-medium">
-                          {job.work_title || job.work_order_id}
-                        </span>
-                        {job.work_order_date && (
-                          <span className="ml-2 text-xs text-zinc-400">
-                            {new Date(job.work_order_date).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                              },
-                            )}
+                        <div className="flex min-w-0 items-center gap-2 py-0.5">
+                          <span className="font-mono text-[10px] text-zinc-400 shrink-0">
+                            #{shortId(job.work_order_id)}
                           </span>
-                        )}
+                          <span className="truncate text-xs font-medium text-zinc-700 dark:text-zinc-200">
+                            {job.work_title || "Untitled"}
+                          </span>
+                          {job.category && (
+                            <span className="shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                              {job.category}
+                            </span>
+                          )}
+                          <span className="ml-auto shrink-0 whitespace-nowrap text-[11px] text-zinc-400">
+                            {job.region ? `${job.region} · ` : ""}
+                            {job.subtotal != null
+                              ? fmt(job.subtotal)
+                              : "No price"}{" "}
+                            ·{" "}
+                            {job.work_order_date
+                              ? fmtDate(job.work_order_date)
+                              : "No date"}
+                          </span>
+                        </div>
                       </SelectItem>
                     ))
                   )}
@@ -317,41 +366,110 @@ export function AddEditReviewDialog({
 
               {/* Job detail preview card */}
               {selectedJob && (
-                <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
-                  <div className="flex items-start gap-2">
-                    <Briefcase className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-400" />
-                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
-                      {selectedJob.work_title}
-                    </span>
+                <div className="mt-2 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+                  {/* Header */}
+                  <div className="flex items-start gap-2.5 border-b border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700">
+                      <Briefcase className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                        {selectedJob.work_title}
+                      </p>
+                      <p className="font-mono text-[11px] text-zinc-400">
+                        #{selectedJob.work_order_id?.slice(0, 12) ?? "—"}
+                      </p>
+                    </div>
+                    {selectedJob.category && (
+                      <span className="ml-auto shrink-0 rounded-full bg-zinc-200 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300">
+                        {selectedJob.category}
+                      </span>
+                    )}
                   </div>
-                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
+
+                  {/* Details grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 bg-zinc-50 p-3 dark:bg-zinc-800/30">
                     {selectedJob.work_order_date && (
                       <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                         <CalendarDays className="h-3 w-3 shrink-0" />
-                        {new Date(
-                          selectedJob.work_order_date,
-                        ).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        {fmtDate(selectedJob.work_order_date)}
+                      </div>
+                    )}
+                    {selectedJob.region && (
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                        <Globe className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{selectedJob.region}</span>
                       </div>
                     )}
                     {selectedJob.address && (
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                      <div className="col-span-2 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                         <MapPin className="h-3 w-3 shrink-0" />
                         <span className="truncate">{selectedJob.address}</span>
                       </div>
                     )}
-                    {selectedJob.subtotal != null && (
-                      <div className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                        <span className="text-zinc-400">Subtotal</span>
-                        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                          {fmt(selectedJob.subtotal)}
+                    {selectedJob.description && (
+                      <div className="col-span-2 flex items-start gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                        <FileText className="mt-0.5 h-3 w-3 shrink-0" />
+                        <span className="line-clamp-2">
+                          {selectedJob.description}
                         </span>
                       </div>
                     )}
                   </div>
+
+                  {/* Financial footer */}
+                  {[
+                    {
+                      label: "Subtotal",
+                      value: selectedJob.subtotal,
+                      Icon: Receipt,
+                    },
+                    {
+                      label: "Net",
+                      value: selectedJob.net_revenue,
+                      Icon: TrendingUp,
+                    },
+                    {
+                      label: "Parts",
+                      value: selectedJob.parts_total_cost,
+                      Icon: Package,
+                    },
+                  ].some((item) => item.value != null) && (
+                    <div className="flex divide-x divide-zinc-200 border-t border-zinc-200 bg-zinc-100/60 dark:divide-zinc-700 dark:border-zinc-700 dark:bg-zinc-900/40">
+                      {[
+                        {
+                          label: "Subtotal",
+                          value: selectedJob.subtotal,
+                          Icon: Receipt,
+                        },
+                        {
+                          label: "Net",
+                          value: selectedJob.net_revenue,
+                          Icon: TrendingUp,
+                        },
+                        {
+                          label: "Parts",
+                          value: selectedJob.parts_total_cost,
+                          Icon: Package,
+                        },
+                      ]
+                        .filter((item) => item.value != null)
+                        .map(({ label, value, Icon }) => (
+                          <div
+                            key={label}
+                            className="flex flex-1 flex-col items-center gap-0.5 py-2"
+                          >
+                            <div className="flex items-center gap-1 text-[10px] text-zinc-400">
+                              <Icon className="h-2.5 w-2.5" />
+                              {label}
+                            </div>
+                            <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">
+                              {fmt(value!)}
+                            </p>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -367,6 +485,7 @@ export function AddEditReviewDialog({
                 </Label>
                 <Select
                   value={review_type_id || ""}
+                  disabled={reviewTypes.length === 0}
                   onValueChange={(value) => {
                     setValue("review_type_id", value);
                     // Auto-fill amount from the review type's price
@@ -377,7 +496,13 @@ export function AddEditReviewDialog({
                   }}
                 >
                   <SelectTrigger id="review_type_id" className="w-full">
-                    <SelectValue placeholder="Select type…" />
+                    <SelectValue
+                      placeholder={
+                        reviewTypes.length > 0
+                          ? "Select type…"
+                          : "No types available"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {reviewTypes.map((type) => (
