@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Building2,
@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "@/components/mode-toggle";
+import { ProtectedRoute } from "@/components/protected-route";
 import { useAuth } from "@/components/auth-provider";
 import { useLogout } from "@/hooks/auth/useLogout";
+import { useFetchRole } from "@/hooks/auth/useFetchRole";
 
 const navItems = [
   { href: "/super-admin", label: "Overview", icon: LayoutDashboard },
@@ -30,9 +32,19 @@ export default function SuperAdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  const { data: profile, isLoading: isRoleLoading } = useFetchRole(user?.id);
   const logoutMutation = useLogout();
+
+  const isSuperAdmin = profile?.role === "super_admin";
+
+  useEffect(() => {
+    if (!isRoleLoading && user && !isSuperAdmin) {
+      router.replace("/dashboard");
+    }
+  }, [isRoleLoading, user, isSuperAdmin, router]);
 
   const SidebarContent = () => (
     <>
@@ -101,62 +113,74 @@ export default function SuperAdminLayout({
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950">
-      {/* Desktop Sidebar */}
-      <aside className="hidden w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
-        <SidebarContent />
-      </aside>
+    <ProtectedRoute>
+      {isRoleLoading ? (
+        <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+          <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+        </div>
+      ) : !isSuperAdmin ? null : (
+        <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950">
+          {/* Desktop Sidebar */}
+          <aside className="hidden w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
+            <SidebarContent />
+          </aside>
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+          {/* Mobile Sidebar Overlay */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Mobile Sidebar Drawer */}
+          <aside
+            className={cn(
+              "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-zinc-200 bg-white transition-transform duration-300 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden",
+              sidebarOpen ? "translate-x-0" : "-translate-x-full",
+            )}
+          >
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="absolute right-3 top-4 rounded-md p-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              aria-label="Close sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <SidebarContent />
+          </aside>
+
+          {/* Main */}
+          <div className="flex flex-1 min-w-0 flex-col overflow-hidden">
+            {/* Top bar */}
+            <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900">
+              <h1 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                {navItems.find((n) =>
+                  n.href === "/super-admin"
+                    ? pathname === "/super-admin"
+                    : pathname.startsWith(n.href),
+                )?.label ?? "Super Admin"}
+              </h1>
+              <ModeToggle />
+            </header>
+
+            <main className="flex-1 overflow-y-auto p-6">{children}</main>
+          </div>
+
+          {/* Floating toggle button, mobile only */}
+          <button
+            onClick={() => setSidebarOpen((prev) => !prev)}
+            className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900 text-white shadow-lg transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 lg:hidden"
+            aria-label="Toggle sidebar"
+          >
+            {sidebarOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
+        </div>
       )}
-
-      {/* Mobile Sidebar Drawer */}
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-60 flex-col border-r border-zinc-200 bg-white transition-transform duration-300 dark:border-zinc-800 dark:bg-zinc-900 lg:hidden",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="absolute right-3 top-4 rounded-md p-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-          aria-label="Close sidebar"
-        >
-          <X className="h-5 w-5" />
-        </button>
-        <SidebarContent />
-      </aside>
-
-      {/* Main */}
-      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
-        {/* Top bar */}
-        <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-6 dark:border-zinc-800 dark:bg-zinc-900">
-          <h1 className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-            {navItems.find((n) =>
-              n.href === "/super-admin"
-                ? pathname === "/super-admin"
-                : pathname.startsWith(n.href),
-            )?.label ?? "Super Admin"}
-          </h1>
-          <ModeToggle />
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
-      </div>
-
-      {/* Floating toggle button, mobile only */}
-      <button
-        onClick={() => setSidebarOpen((prev) => !prev)}
-        className="fixed bottom-6 right-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900 text-white shadow-lg transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 lg:hidden"
-        aria-label="Toggle sidebar"
-      >
-        {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
-    </div>
+    </ProtectedRoute>
   );
 }

@@ -50,11 +50,14 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Auth to determine which nav items to show and whether to allow access to certain routes
   const { user } = useAuth();
   const { data: profile, isLoading: isRoleLoading } = useFetchRole(user?.id);
   const logoutMutation = useLogout();
 
-  const isAdmin = profile?.role === "admin" || "super_admin";
+  // Admins can see all nav items; non-admins have some items hidden and are redirected if they try to access those routes
+  const isAdmin = profile?.role === "admin" || profile?.role === "super_admin";
   const isRestrictedRoute =
     pathname.startsWith("/dashboard/technicians") ||
     pathname.startsWith("/dashboard/settings");

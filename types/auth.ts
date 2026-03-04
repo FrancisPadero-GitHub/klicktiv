@@ -16,6 +16,7 @@ export type SignUpFormValues = {
 // ── Auth state ───────────────────────────────────────────────
 export type AuthState = {
   user: User | null;
+  role: string | null;
   session: Session | null;
   isLoading: boolean;
 };

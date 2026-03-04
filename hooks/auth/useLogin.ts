@@ -18,15 +18,25 @@ export function useLogin() {
   return useMutation({
     mutationFn: (values: LoginFormValues) => loginWithEmail(values),
     onSuccess: (data) => {
-      console.log("SEssion raw data:", data.session?.user?.app_metadata);
+      // console.log("Session raw data:", data.session?.user?.app_metadata?.role);
       queryClient.setQueryData(AUTH_QUERY_KEY, data.session ?? null);
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+
+      // Redirect based on role
+      if (data.session?.user?.app_metadata?.role === "super_admin") {
+        router.replace("/super-admin");
+        return;
+      }
       router.replace("/dashboard");
     },
   });
 }
 
 // add a logic here to get the company_id from the user metadata using this one
-// const companyId = data.session?.user?.app_metadata; // loop through this one and make sure to store the data from company_id
+// const companyId = data.session?.user?.app_metadata?.role; // loop through this one and make sure to store the data from company_id
 // query that company ID from a company table to match it and store it in a variable and use it across the app to make sure that the user is only accessing the data from his company
 // and show only the pages that are related to his company and make sure that the user is only accessing the data from his company and not from other companies data
+
+// only use this to query data about the company like details and what not, do not use this as to safeguard anything
+// because the RLS policies should be doing the heavy lifting of safeguarding the data and making sure that the user
+// is only accessing the data from his company and not from other companies data
