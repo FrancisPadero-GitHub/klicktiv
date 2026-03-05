@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "@/components/mode-toggle";
+import Image from "next/image";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -14,10 +15,14 @@ export default function Navbar() {
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex shrink-0 items-center">
-          <img
+          <Image
             src="/kt_logo_name.png"
+            title="Go to Klicktiv"
             alt="Klicktiv Logo"
-            className="h-10 pl-20 w-auto dark:brightness-0 dark:invert"
+            width={160}
+            height={48}
+            className="h-12 w-auto dark:brightness-0 dark:invert"
+            priority
           />
         </Link>
 

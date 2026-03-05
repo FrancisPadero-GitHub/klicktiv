@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { PaymentMethodsTable } from "@/components/dashboard/settings/payment-methods";
 import { ReviewTypesTable } from "@/components/dashboard/settings/review-types";
 import { ProfilesTable } from "@/components/dashboard/settings/profiles-table";
