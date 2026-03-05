@@ -317,7 +317,7 @@ export function TechnicianTable() {
           </div>
 
           {/* Table */}
-          <div className="min-h-96 max-h-96 overflow-x-auto">
+          <div className="min-h-96 max-h-150 overflow-x-auto">
             <Table className="min-w-225 text-sm">
               <TableHeader className="sticky top-0 bg-white dark:bg-zinc-900">
                 <TableRow className="border-zinc-200 dark:border-zinc-800">

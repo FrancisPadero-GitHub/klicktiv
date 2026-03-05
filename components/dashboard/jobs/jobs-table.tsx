@@ -424,7 +424,7 @@ export function JobsTable() {
           Failed to load jobs.
         </div>
       ) : (
-        <div className="min-h-96 max-h-1/2 overflow-x-auto">
+        <div className="min-h-96 max-h-150 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="sticky top-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-900">

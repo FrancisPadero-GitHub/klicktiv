@@ -60,7 +60,7 @@ export function ProfilesTable() {
 
         {/* Table */}
         {profiles && profiles.length > 0 ? (
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <div className="max-h-150 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow className="bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-900">
