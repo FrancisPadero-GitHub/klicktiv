@@ -14,7 +14,7 @@ export const fetchPaymentMethods = async (
     .select("*")
     .eq("company_id", companyId)
     .is("deleted_at", null)
-    .order("name");
+    .order("created_at", { ascending: false });
 
   if (error)
     throw new Error(error.message || "Failed to fetch payment methods");
