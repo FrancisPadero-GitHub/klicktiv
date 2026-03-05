@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { ReviewSummaryCards } from "@/components/dashboard/reviews/review-summary-cards";
 import { ReviewsTable } from "@/components/dashboard/reviews/reviews-table";
 import { AddEditReviewDialog } from "@/components/dashboard/reviews/form-review-dialog";
+import { useFetchReviewRecords } from "@/hooks/reviews/useFetchReviewRecords";
 import { Button } from "@/components/ui/button";
 import type { Database } from "@/database.types";
 
@@ -15,7 +16,14 @@ type ReviewRecordViewRow =
 export default function ReviewsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const openParam = searchParams.get("open");
+  const jobIdParam = searchParams.get("jobId");
+  const reviewIdParam = searchParams.get("reviewId");
   const highlightReviewId = searchParams.get("highlightReviewId");
+
+  const { data: reviewRecords = [] } = useFetchReviewRecords();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"add" | "edit">("add");
   const [selectedReview, setSelectedReview] =
@@ -23,18 +31,52 @@ export default function ReviewsPage() {
   const [prefilledJobId, setPrefilledJobId] = useState<string | null>(null);
 
   useEffect(() => {
-    const open = searchParams.get("open");
-    const jobId = searchParams.get("jobId");
+    if (openParam === "add") {
+      setSelectedReview(null);
+      setDialogMode("add");
+      setPrefilledJobId(jobIdParam);
+      setIsDialogOpen(true);
 
-    if (open !== "add") return;
+      router.replace("/dashboard/reviews", { scroll: false });
+      return;
+    }
 
-    setSelectedReview(null);
-    setDialogMode("add");
-    setPrefilledJobId(jobId);
+    if (openParam !== "edit" || !reviewIdParam) {
+      return;
+    }
+
+    const reviewToEdit = reviewRecords.find(
+      (review) => review.review_id === reviewIdParam,
+    );
+
+    // Wait for records to load before opening edit mode from deeplink.
+    if (!reviewToEdit) {
+      return;
+    }
+
+    setSelectedReview((current) =>
+      current?.review_id === reviewToEdit.review_id ? current : reviewToEdit,
+    );
+    setDialogMode("edit");
+    setPrefilledJobId(null);
     setIsDialogOpen(true);
 
     router.replace("/dashboard/reviews", { scroll: false });
-  }, [router, searchParams]);
+  }, [openParam, jobIdParam, reviewIdParam, reviewRecords, router]);
+
+  useEffect(() => {
+    if (openParam !== "edit" || !reviewIdParam) return;
+
+    if (reviewRecords.length === 0) return;
+
+    const reviewExists = reviewRecords.some(
+      (review) => review.review_id === reviewIdParam,
+    );
+
+    if (!reviewExists) {
+      router.replace("/dashboard/reviews", { scroll: false });
+    }
+  }, [openParam, reviewIdParam, reviewRecords, router]);
 
   const handleOpenAddDialog = () => {
     setSelectedReview(null);

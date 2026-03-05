@@ -51,10 +51,22 @@ import type { Database } from "@/database.types";
 import { useAddReviewRecord } from "@/hooks/reviews/useAddReviewRecords";
 import { useEditReviewRecord } from "@/hooks/reviews/useEditReviewRecords";
 import { useDelReviewRecord } from "@/hooks/reviews/useDelReviewRecords";
-import { useFetchReviewTypes } from "@/hooks/reviews/useFetchReviewTypes";
-import { useFetchPaymentMethods } from "@/hooks/payment-methods/useFetchPaymentMethods";
-import { useFetchJobsForReview } from "@/hooks/reviews/useFetchJobsForReview";
-import { useFetchUnreviewedJobs } from "@/hooks/reviews/useFetchUnreviewedJobs";
+import {
+  useFetchReviewTypes,
+  type ReviewTypeRow,
+} from "@/hooks/reviews/useFetchReviewTypes";
+import {
+  useFetchPaymentMethods,
+  type PaymentMethodRow,
+} from "@/hooks/payment-methods/useFetchPaymentMethods";
+import {
+  useFetchJobsForReview,
+  type JobRow,
+} from "@/hooks/reviews/useFetchJobsForReview";
+import {
+  useFetchUnreviewedJobs,
+  type UnreviewedJobRow,
+} from "@/hooks/reviews/useFetchUnreviewedJobs";
 
 type ReviewRecordFormValues =
   Database["public"]["Tables"]["review_records"]["Insert"];
@@ -79,6 +91,11 @@ const shortId = (value: string | null) => {
   if (!value) return "";
   return value.slice(0, 8);
 };
+
+const EMPTY_REVIEW_TYPES: ReviewTypeRow[] = [];
+const EMPTY_PAYMENT_METHODS: PaymentMethodRow[] = [];
+const EMPTY_JOB_ROWS: JobRow[] = [];
+const EMPTY_UNREVIEWED_JOB_ROWS: UnreviewedJobRow[] = [];
 
 interface AddEditReviewDialogProps {
   open: boolean;
@@ -124,10 +141,12 @@ export function AddEditReviewDialog({
   } = useDelReviewRecord();
 
   // Fetch review types, payment methods, and jobs
-  const { data: reviewTypes = [] } = useFetchReviewTypes();
-  const { data: paymentMethods = [] } = useFetchPaymentMethods();
-  const { data: allDoneJobs = [] } = useFetchJobsForReview();
-  const { data: unreviewedJobs = [] } = useFetchUnreviewedJobs();
+  const { data: reviewTypes = EMPTY_REVIEW_TYPES } = useFetchReviewTypes();
+  const { data: paymentMethods = EMPTY_PAYMENT_METHODS } =
+    useFetchPaymentMethods();
+  const { data: allDoneJobs = EMPTY_JOB_ROWS } = useFetchJobsForReview();
+  const { data: unreviewedJobs = EMPTY_UNREVIEWED_JOB_ROWS } =
+    useFetchUnreviewedJobs();
 
   // In add mode only show unreviewed jobs; in edit mode show unreviewed jobs + the current job
   const jobOptions =
@@ -152,6 +171,7 @@ export function AddEditReviewDialog({
     watch,
     setValue,
     reset: resetForm,
+    formState: { errors },
   } = useForm<ReviewRecordFormValues>({
     defaultValues: {
       amount: 0,
@@ -305,7 +325,10 @@ export function AddEditReviewDialog({
               <Select
                 value={job_id || ""}
                 onValueChange={(value) => {
-                  setValue("job_id", value);
+                  setValue("job_id", value, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
                   if (mode === "add") {
                     const picked = unreviewedJobs.find(
                       (j) => j.work_order_id === value,
@@ -363,6 +386,17 @@ export function AddEditReviewDialog({
                   )}
                 </SelectContent>
               </Select>
+              <input
+                type="hidden"
+                {...register("job_id", {
+                  required: "Job is required",
+                })}
+              />
+              {errors.job_id && (
+                <p className="text-[11px] text-red-500">
+                  {errors.job_id.message}
+                </p>
+              )}
 
               {/* Job detail preview card */}
               {selectedJob && (
@@ -487,11 +521,17 @@ export function AddEditReviewDialog({
                   value={review_type_id || ""}
                   disabled={reviewTypes.length === 0}
                   onValueChange={(value) => {
-                    setValue("review_type_id", value);
+                    setValue("review_type_id", value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
                     // Auto-fill amount from the review type's price
                     const picked = reviewTypes.find((t) => t.id === value);
                     if (picked?.price != null) {
-                      setValue("amount", picked.price);
+                      setValue("amount", picked.price, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
                     }
                   }}
                 >
@@ -515,6 +555,17 @@ export function AddEditReviewDialog({
                     ))}
                   </SelectContent>
                 </Select>
+                <input
+                  type="hidden"
+                  {...register("review_type_id", {
+                    required: "Review type is required",
+                  })}
+                />
+                {errors.review_type_id && (
+                  <p className="text-[11px] text-red-500">
+                    {errors.review_type_id.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -554,11 +605,20 @@ export function AddEditReviewDialog({
                     min="0"
                     className="pl-6"
                     {...register("amount", {
-                      required: true,
+                      required: "Amount is required",
                       valueAsNumber: true,
+                      validate: (value) =>
+                        Number.isFinite(value) && value > 0
+                          ? true
+                          : "Amount must be greater than 0",
                     })}
                   />
                 </div>
+                {errors.amount && (
+                  <p className="text-[11px] text-red-500">
+                    {errors.amount.message}
+                  </p>
+                )}
                 {review_type_id && (
                   <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
                     Prefilled from review type · editable
