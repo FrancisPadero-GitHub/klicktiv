@@ -15,7 +15,7 @@ import { useAuth } from "@/components/auth-provider";
 export default function DashboardPage() {
   const { role } = useAuth();
 
-  const isAdmin = role === "admin" || role === "super_admin";
+  const isAdmin = role === "company";
 
   const {
     // Query states
