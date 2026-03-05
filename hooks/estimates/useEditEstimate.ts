@@ -18,11 +18,20 @@ const dbEditEstimate = async (
   payload: EditEstimatePayload,
   companyId: string,
 ) => {
+  const now = new Date().toISOString();
+
   const hasEstimateUpdates =
     payload.estimateUpdates && Object.keys(payload.estimateUpdates).length > 0;
   const hasWorkOrderUpdates =
     payload.workOrderUpdates &&
     Object.keys(payload.workOrderUpdates).length > 0;
+
+  const workOrderUpdates = payload.workOrderUpdates
+    ? {
+        ...payload.workOrderUpdates,
+        updated_at: now,
+      }
+    : undefined;
 
   let estimateResult: Database["public"]["Tables"]["estimates"]["Row"] | null =
     null;
@@ -46,10 +55,10 @@ const dbEditEstimate = async (
     estimateResult = data;
   }
 
-  if (hasWorkOrderUpdates) {
+  if (hasWorkOrderUpdates && workOrderUpdates) {
     const { data, error } = await supabase
       .from("work_orders")
-      .update(payload.workOrderUpdates)
+      .update(workOrderUpdates)
       .eq("id", payload.estimateId)
       .eq("company_id", companyId)
       .select()

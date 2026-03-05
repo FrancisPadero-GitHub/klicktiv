@@ -18,6 +18,9 @@ import {
   FileText,
   DollarSign,
   Calendar,
+  Phone,
+  Mail,
+  Clock3,
   StickyNote,
   Pencil,
   Trash2,
@@ -29,6 +32,18 @@ const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     n,
   );
+
+const fmtDateTime = (value: string | null | undefined) => {
+  if (!value) return "-";
+
+  return new Date(value).toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 const statusStyles: Record<EstimateStatus, string> = {
   follow_up:
@@ -119,6 +134,14 @@ export function EstimateViewDialog({
               )}
             </InfoRow>
 
+            <InfoRow icon={Phone} label="Contact Number">
+              {estimate.contact_no ?? "—"}
+            </InfoRow>
+
+            <InfoRow icon={Mail} label="Contact Email">
+              {estimate.contact_email ?? "—"}
+            </InfoRow>
+
             <InfoRow icon={User} label="Technician">
               {techName ?? "—"}
             </InfoRow>
@@ -156,6 +179,14 @@ export function EstimateViewDialog({
 
             <InfoRow icon={BadgeCheck} label="Handled By">
               {estimate.handled_by ?? "—"}
+            </InfoRow>
+
+            <InfoRow icon={Clock3} label="Last Updated">
+              {fmtDateTime(estimate.updated_at)}
+            </InfoRow>
+
+            <InfoRow icon={Clock3} label="Promoted At">
+              {fmtDateTime(estimate.promoted_at)}
             </InfoRow>
 
             {estimate.notes && (

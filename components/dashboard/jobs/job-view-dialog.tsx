@@ -23,12 +23,28 @@ import {
   StickyNote,
   Pencil,
   Trash2,
+  Phone,
+  Mail,
+  Clock3,
 } from "lucide-react";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     n,
   );
+
+const fmtDateTime = (value: string | null | undefined) => {
+  if (!value) return "—";
+
+  return new Date(value).toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+};
 
 const paymentColors: Record<string, string> = {
   cash: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
@@ -228,6 +244,11 @@ export function JobViewDialog({
                   {job.category ?? "—"}
                 </InfoRow>
 
+                {/* Contact Number */}
+                <InfoRow icon={Phone} label="Contact Number">
+                  {job.contact_no ?? "—"}
+                </InfoRow>
+
                 {/* Payment */}
                 <InfoRow icon={CreditCard} label="Payment Method">
                   <span
@@ -252,6 +273,21 @@ export function JobViewDialog({
                 {/* Net Revenue */}
                 <InfoRow icon={Wrench} label="Net Revenue">
                   {fmt(job.net_revenue ?? 0)}
+                </InfoRow>
+
+                {/* Contact Email */}
+                <InfoRow icon={Mail} label="Contact Email">
+                  {job.contact_email ?? "—"}
+                </InfoRow>
+
+                {/* Marked done at */}
+                <InfoRow icon={Star} label="Marked done at">
+                  {fmtDateTime(job.promoted_at)}
+                </InfoRow>
+
+                {/* Last Updated */}
+                <InfoRow icon={Clock3} label="Last Updated">
+                  {fmtDateTime(job.updated_at)}
                 </InfoRow>
 
                 {/* Description */}

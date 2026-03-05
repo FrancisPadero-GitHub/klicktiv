@@ -53,6 +53,8 @@ interface EstimateFormTypes {
   category: string;
   region: string;
   address: string;
+  contact_no: string;
+  contact_email: string;
   work_order_date: string;
   notes: string;
 
@@ -76,6 +78,8 @@ const form: EstimateFormTypes = {
   category: "",
   region: "",
   address: "",
+  contact_no: "",
+  contact_email: "",
   work_order_date: "",
   notes: "",
   // estimate fields default values
@@ -92,6 +96,8 @@ const mapEstimateToForm = (estimate: EstimateWithNotes): EstimateFormTypes => ({
   category: estimate.category ?? "",
   region: estimate.region ?? "",
   address: estimate.address ?? "",
+  contact_no: estimate.contact_no ?? "",
+  contact_email: estimate.contact_email ?? "",
   work_order_date: estimate.work_order_date ?? "",
   notes: estimate.notes ?? "",
   estimated_amount: Number(estimate.estimated_amount ?? 0),
@@ -222,6 +228,8 @@ export function NewEstimateDialog({
             category: data.category || null,
             region: data.region || null,
             address: data.address || null,
+            contact_no: data.contact_no || null,
+            contact_email: data.contact_email || null,
             work_order_date: data.work_order_date,
             notes: data.notes || null,
           },
@@ -244,6 +252,8 @@ export function NewEstimateDialog({
           category: data.category || null,
           region: data.region || null,
           address: data.address || null,
+          contact_no: data.contact_no || null,
+          contact_email: data.contact_email || null,
           work_order_date: data.work_order_date,
           notes: data.notes || null,
         },
@@ -273,6 +283,8 @@ export function NewEstimateDialog({
       category: estimateFormData.category || null,
       region: estimateFormData.region || null,
       address: estimateFormData.address || null,
+      contact_no: estimateFormData.contact_no || null,
+      contact_email: estimateFormData.contact_email || null,
       work_order_date: estimateFormData.work_order_date,
       notes: estimateFormData.notes || null,
     };
@@ -501,6 +513,27 @@ export function NewEstimateDialog({
                   placeholder="e.g. 123 Main St, Suite 4"
                   {...register("address")}
                 />
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="contact_no">Contact Number</Label>
+                  <Input
+                    id="contact_no"
+                    placeholder="e.g. +1 555 010 2233"
+                    {...register("contact_no")}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="contact_email">Contact Email</Label>
+                  <Input
+                    id="contact_email"
+                    type="email"
+                    placeholder="e.g. customer@example.com"
+                    {...register("contact_email")}
+                  />
+                </div>
               </div>
 
               <div className="grid gap-2">

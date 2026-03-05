@@ -18,6 +18,8 @@ export interface JobFormValues {
   description: string;
   notes: string;
   region: string;
+  contact_no: string;
+  contact_email: string;
   // job fields
   subtotal: number;
   parts_total_cost: number;
@@ -64,6 +66,8 @@ export const defaultJobForm: JobFormValues = {
   description: "",
   notes: "",
   region: "",
+  contact_no: "",
+  contact_email: "",
   subtotal: 0,
   parts_total_cost: 0,
   payment_method_id: "",
@@ -132,6 +136,8 @@ export const useJobStore = create<JobStore>((set, get) => ({
       description: f.description || null,
       notes: f.notes || null,
       region: f.region || null,
+      contact_no: f.contact_no || null,
+      contact_email: f.contact_email || null,
     };
     const job: Omit<JobInsert, "work_order_id"> = {
       subtotal: f.subtotal,

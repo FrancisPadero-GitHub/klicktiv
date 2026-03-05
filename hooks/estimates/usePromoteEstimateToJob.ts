@@ -19,13 +19,20 @@ const dbPromoteEstimateToJob = async (
   payload: PromoteEstimateToJobPayload,
   companyId: string,
 ) => {
+  const now = new Date().toISOString();
+
   if (
     payload.workOrderUpdates &&
     Object.keys(payload.workOrderUpdates).length
   ) {
+    const workOrderUpdate = {
+      ...payload.workOrderUpdates,
+      updated_at: now,
+    };
+
     const { error: workOrderError } = await supabase
       .from("work_orders")
-      .update(payload.workOrderUpdates)
+      .update(workOrderUpdate)
       .eq("id", payload.workOrderId)
       .eq("company_id", companyId);
 
@@ -54,9 +61,14 @@ const dbPromoteEstimateToJob = async (
     throw new Error(jobError.message || "Failed to promote estimate to job");
   }
 
+  const estimateUpdate = {
+    ...payload.estimateUpdates,
+    promoted_at: now,
+  };
+
   const { data: estimateResult, error: estimateError } = await supabase
     .from("estimates")
-    .update(payload.estimateUpdates)
+    .update(estimateUpdate)
     .eq("work_order_id", payload.workOrderId)
     .eq("company_id", companyId)
     .select()

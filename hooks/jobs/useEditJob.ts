@@ -14,10 +14,49 @@ export interface EditJobPayload {
 }
 
 const dbEditJob = async (payload: EditJobPayload, companyId: string) => {
+  const now = new Date().toISOString();
+
+  const workOrderUpdate: WorkOrderUpdate = {
+    ...payload.workOrder,
+    updated_at: now,
+  };
+
+  const jobUpdate: JobUpdate = { ...payload.job };
+
+  if (payload.job.status === "done") {
+    const { data: currentJob, error: currentJobError } = await supabase
+      .from("jobs")
+      .select("status, promoted_at")
+      .eq("work_order_id", payload.workOrderId)
+      .eq("company_id", companyId)
+      .single();
+
+    if (currentJobError) {
+      throw new Error(currentJobError.message || "Failed to fetch current job");
+    }
+
+    const isPromotingNow = currentJob.status !== "done";
+    if (isPromotingNow) {
+      jobUpdate.promoted_at = now;
+
+      const { error: estimatePromoteError } = await supabase
+        .from("estimates")
+        .update({ promoted_at: now })
+        .eq("work_order_id", payload.workOrderId)
+        .eq("company_id", companyId);
+
+      if (estimatePromoteError) {
+        throw new Error(
+          estimatePromoteError.message || "Failed to update estimate promoted date",
+        );
+      }
+    }
+  }
+
   // Update the work order
   const { error: woError } = await supabase
     .from("work_orders")
-    .update(payload.workOrder)
+    .update(workOrderUpdate)
     .eq("id", payload.workOrderId)
     .eq("company_id", companyId);
 
@@ -28,7 +67,7 @@ const dbEditJob = async (payload: EditJobPayload, companyId: string) => {
   // Update the job
   const { data: result, error: jobError } = await supabase
     .from("jobs")
-    .update(payload.job)
+    .update(jobUpdate)
     .eq("work_order_id", payload.workOrderId)
     .eq("company_id", companyId)
     .select()

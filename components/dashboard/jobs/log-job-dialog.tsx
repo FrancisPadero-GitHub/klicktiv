@@ -122,7 +122,14 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
       description: data.description || null,
       notes: data.notes || null,
       region: data.region || null,
+      contact_no: data.contact_no || null,
+      contact_email: data.contact_email || null,
     };
+
+    const promotedAt =
+      data.status === "done" && form.status !== "done"
+        ? new Date().toISOString()
+        : undefined;
 
     const job = {
       subtotal: Number(data.subtotal),
@@ -130,6 +137,7 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
       payment_method_id: data.payment_method_id || null,
       status: data.status,
       tip_amount: Number(data.tip_amount) || 0,
+      promoted_at: promotedAt,
     };
 
     if (isEdit) {
@@ -359,6 +367,36 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
                     disabled={isPending}
                     {...register("address")}
                   />
+                </div>
+
+                {/* Contact */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="job-contact-no">
+                      Contact Number{" "}
+                      <span className="text-zinc-400 text-xs">(optional)</span>
+                    </Label>
+                    <Input
+                      id="job-contact-no"
+                      placeholder="e.g. +1 555 123 4567"
+                      disabled={isPending}
+                      {...register("contact_no")}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="job-contact-email">
+                      Contact Email{" "}
+                      <span className="text-zinc-400 text-xs">(optional)</span>
+                    </Label>
+                    <Input
+                      id="job-contact-email"
+                      type="email"
+                      placeholder="customer@example.com"
+                      disabled={isPending}
+                      {...register("contact_email")}
+                    />
+                  </div>
                 </div>
 
                 {/* Description */}
