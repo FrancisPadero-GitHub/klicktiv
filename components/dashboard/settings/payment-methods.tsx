@@ -59,8 +59,8 @@ export function PaymentMethodsTable() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.SubmitEvent) => {
+    event.preventDefault();
 
     if (!formData.name.trim() || isDuplicate) {
       return;
@@ -142,7 +142,12 @@ export function PaymentMethodsTable() {
                     : "Create a new payment method"}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                onSubmit={(e) => {
+                  void handleSubmit(e);
+                }}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
                   <Input
@@ -263,7 +268,9 @@ export function PaymentMethodsTable() {
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDelete}
+                onClick={() => {
+                  void handleDelete();
+                }}
                 disabled={deleteMutation.isPending}
                 className="bg-red-500 hover:bg-red-600"
               >

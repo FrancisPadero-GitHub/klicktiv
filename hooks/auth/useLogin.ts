@@ -19,11 +19,11 @@ export function useLogin() {
     mutationFn: (values: LoginFormValues) => loginWithEmail(values),
     onSuccess: (data) => {
       // console.log("Session raw data:", data.session?.user?.app_metadata?.role);
-      queryClient.setQueryData(AUTH_QUERY_KEY, data.session ?? null);
-      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
+      queryClient.setQueryData(AUTH_QUERY_KEY, data.session);
+      void queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEY });
 
       // Redirect based on role
-      if (data.session?.user?.app_metadata?.role === "super_admin") {
+      if (data.session.user.app_metadata.role === "super_admin") {
         router.replace("/super-admin");
         return;
       }

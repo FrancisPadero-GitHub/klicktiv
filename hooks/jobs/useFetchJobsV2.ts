@@ -127,14 +127,10 @@ const resolveDateRange = (filter?: JobsSummaryFilter): ResolvedDateRange => {
     return { startDate: day, endDate: day };
   }
 
-  if (mode === "range") {
-    return {
-      startDate: filter.startDate,
-      endDate: filter.endDate,
-    };
-  }
-
-  return {};
+  return {
+    startDate: filter.startDate,
+    endDate: filter.endDate,
+  };
 };
 
 // Data fetching function
@@ -160,7 +156,7 @@ export const fetchJobSummary = async (
     throw new Error(error.message || "Failed to fetch job financial breakdown");
   }
 
-  const rows = (jobs ?? []) as Pick<
+  const rows = jobs as Pick<
     VJobsRow,
     | "work_order_id"
     | "subtotal"

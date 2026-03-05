@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Plus, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,13 +31,13 @@ export function AddCompanyDialog() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<FormValues>();
 
-  const passwordValue = watch("password");
+  const passwordValue = useWatch({ control, name: "password" });
 
   function onSubmit(values: FormValues) {
     createCompany.mutate(
@@ -71,7 +71,12 @@ export function AddCompanyDialog() {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(onSubmit)(e);
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-1.5">
               <Label htmlFor="company_name">Company Name</Label>
               <Input

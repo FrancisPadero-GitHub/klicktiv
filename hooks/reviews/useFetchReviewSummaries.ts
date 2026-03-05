@@ -18,7 +18,7 @@ const fetchReviewRecordsSummaries = async (
     throw new Error(error.message || "Failed to fetch review records");
   }
 
-  return (data ?? []) as ReviewRecordRowSummaries[];
+  return data as ReviewRecordRowSummaries[];
 };
 
 export function useFetchReviewRecordsSummaries() {

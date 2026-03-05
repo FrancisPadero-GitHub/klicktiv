@@ -6,8 +6,6 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Building2,
-  Users,
-  WalletMinimal,
   Menu,
   X,
   LogOut,
@@ -18,33 +16,26 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { ProtectedRoute } from "@/components/protected-route";
 import { useAuth } from "@/components/auth-provider";
 import { useLogout } from "@/hooks/auth/useLogout";
+import Image from "next/image";
+import type { User } from "@supabase/supabase-js";
 
 const navItems = [
   { href: "/super-admin", label: "Overview", icon: LayoutDashboard },
   { href: "/super-admin/companies", label: "Companies", icon: Building2 },
-  // { href: "/super-admin/company-users", label: "Users", icon: Users },
 ];
 
-export default function SuperAdminLayout({
-  children,
+function SidebarContent({
+  pathname,
+  setSidebarOpen,
+  user,
+  logoutMutation,
 }: {
-  children: React.ReactNode;
+  pathname: string;
+  setSidebarOpen: (open: boolean) => void;
+  user: User | null;
+  logoutMutation: ReturnType<typeof useLogout>;
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, role, isLoading: isRoleLoading } = useAuth();
-  const logoutMutation = useLogout();
-
-  const isSuperAdmin = role === "super_admin";
-
-  useEffect(() => {
-    if (!isRoleLoading && user && !isSuperAdmin) {
-      router.replace("/dashboard");
-    }
-  }, [isRoleLoading, user, isSuperAdmin, router]);
-
-  const SidebarContent = () => (
+  return (
     <>
       {/* Logo */}
       <Link href="/" onClick={() => setSidebarOpen(false)}>
@@ -52,10 +43,14 @@ export default function SuperAdminLayout({
           <span className="absolute top-4 left-28 z-99 text-[9px] font-bold uppercase tracking-widest text-zinc-00 dark:text-zinc-500">
             Super Admin
           </span>
-          <img
+          <Image
             src="/kt_logo_name.png"
+            title="Go to Klicktiv"
             alt="Klicktiv Logo"
+            width={160}
+            height={48}
             className="h-12 w-auto dark:brightness-0 dark:invert"
+            priority
           />
         </div>
       </Link>
@@ -90,7 +85,7 @@ export default function SuperAdminLayout({
       <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
         {user && (
           <p className="mb-2 truncate text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            {user.user_metadata?.full_name ?? user.email}
+            {user.user_metadata.full_name ?? user.email}
           </p>
         )}
         <button
@@ -108,6 +103,26 @@ export default function SuperAdminLayout({
       </div>
     </>
   );
+}
+
+export default function SuperAdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, role, isLoading: isRoleLoading } = useAuth();
+  const logoutMutation = useLogout();
+
+  const isSuperAdmin = role === "super_admin";
+
+  useEffect(() => {
+    if (!isRoleLoading && user && !isSuperAdmin) {
+      router.replace("/dashboard");
+    }
+  }, [isRoleLoading, user, isSuperAdmin, router]);
 
   return (
     <ProtectedRoute>
@@ -119,7 +134,12 @@ export default function SuperAdminLayout({
         <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950">
           {/* Desktop Sidebar */}
           <aside className="hidden w-60 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:flex">
-            <SidebarContent />
+            <SidebarContent
+              pathname={pathname}
+              setSidebarOpen={setSidebarOpen}
+              user={user}
+              logoutMutation={logoutMutation}
+            />
           </aside>
 
           {/* Mobile Sidebar Overlay */}
@@ -144,7 +164,12 @@ export default function SuperAdminLayout({
             >
               <X className="h-5 w-5" />
             </button>
-            <SidebarContent />
+            <SidebarContent
+              pathname={pathname}
+              setSidebarOpen={setSidebarOpen}
+              user={user}
+              logoutMutation={logoutMutation}
+            />
           </aside>
 
           {/* Main */}

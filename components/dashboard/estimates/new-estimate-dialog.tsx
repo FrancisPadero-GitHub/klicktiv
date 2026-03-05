@@ -165,18 +165,19 @@ export function NewEstimateDialog({
   useEffect(() => {
     if (!open) return;
 
-    resetAddMutation();
-    resetEditMutation();
-    resetPromoteMutation();
-    setIsPromoteDialogOpen(false);
-    setPendingPromotion(null);
+    setTimeout(() => {
+      resetAddMutation();
+      resetEditMutation();
+      resetPromoteMutation();
+      setIsPromoteDialogOpen(false);
+      setPendingPromotion(null);
 
-    if (mode === "edit" && selectedEstimate) {
-      reset(mapEstimateToForm(selectedEstimate));
-      return;
-    }
-
-    reset(form);
+      if (mode === "edit" && selectedEstimate) {
+        reset(mapEstimateToForm(selectedEstimate));
+      } else {
+        reset(form);
+      }
+    }, 0);
   }, [
     open,
     mode,
@@ -372,7 +373,7 @@ export function NewEstimateDialog({
           </DialogHeader>
 
           <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={(e) => void handleSubmit(onSubmit)(e)}
             className="flex flex-col flex-1 min-h-0"
           >
             <div className="overflow-y-auto flex-1 grid gap-4 py-2 pl-2 pr-1">

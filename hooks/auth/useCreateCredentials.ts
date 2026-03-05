@@ -92,13 +92,13 @@ export function useCreateUser() {
 
       if (!response.ok) {
         throw new Error(
-          json?.error ||
-            json?.message ||
+          json.error ||
+            json.message ||
             `Failed to create user (${response.status})`,
         );
       }
 
-      const newUserId = json?.data?.user?.id ?? json?.user?.id;
+      const newUserId = json.data?.user?.id ?? json.user?.id;
       if (!newUserId) {
         throw new Error("Failed to get new user UID from Edge Function");
       }

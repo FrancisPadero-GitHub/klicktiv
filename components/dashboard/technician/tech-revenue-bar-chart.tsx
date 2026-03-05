@@ -59,15 +59,16 @@ export function TechRevenueBarChart() {
       const name = j.technician_id
         ? (techNameMap.get(j.technician_id) ?? "Unknown")
         : "Unknown";
-      if (!techRevenueMap[name])
+      if (!(name in techRevenueMap)) {
         techRevenueMap[name] = { companyNet: 0, techPay: 0 };
+      }
       techRevenueMap[name].companyNet += j.total_company_net ?? 0;
       techRevenueMap[name].techPay += j.total_commission ?? 0;
     }
     return Object.entries(techRevenueMap)
       .map(([name, v]) => ({ name, ...v }))
       .sort((a, b) => b.companyNet + b.techPay - (a.companyNet + a.techPay));
-  }, [jobs]);
+  }, [jobs, techNameMap]);
   return (
     <QueryStatePanel
       isLoading={isLoading}

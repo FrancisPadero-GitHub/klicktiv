@@ -42,5 +42,5 @@ export function ProtectedRoute({
     return null;
   }
 
-  return <>{children}</>;
+  return children;
 }

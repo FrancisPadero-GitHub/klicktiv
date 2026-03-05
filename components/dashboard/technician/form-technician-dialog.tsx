@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Users } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -15,13 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 // Zustand store
 import { useTechnicianStore } from "@/features/store/technician/useFormTechnicianStore";
@@ -52,35 +46,24 @@ export function AddTechnicianDialog() {
   // TanStack Query mutations
   const {
     mutate: addTechnician,
-    error: addError,
-    isError: isAddError,
     isPending: isAddPending,
-    isSuccess: isAddSuccess,
     reset: resetAddMutation,
   } = useAddTechnician();
 
   const {
     mutate: editTechnician,
-    error: editError,
-    isError: isEditError,
     isPending: isEditPending,
-    isSuccess: isEditSuccess,
     reset: resetEditMutation,
   } = useEditTechnician();
 
   const isEdit = mode === "edit";
-  const error = isEdit ? editError : addError;
-  const isError = isEdit ? isEditError : isAddError;
   const isPending = isEdit ? isEditPending : isAddPending;
-  const isSuccess = isEdit ? isEditSuccess : isAddSuccess;
 
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
-    watch,
-
+    control,
     formState: { errors, isDirty },
   } = useForm<TechnicianFormValues>({
     defaultValues: {
@@ -91,23 +74,34 @@ export function AddTechnicianDialog() {
     },
   });
 
-  const commission = watch("commission");
+  const commission = useWatch({
+    control,
+    name: "commission",
+  });
 
   // When the dialog opens, reset form with the current store values
   useEffect(() => {
     if (!isDialogOpen) return;
 
     reset({
-      name: form.name ?? "",
-      email: form.email ?? "",
-      commission: form.commission ?? 0,
-      hired_date: form.hired_date ?? new Date().toISOString().slice(0, 10),
+      name: form.name || "",
+      email: form.email || "",
+      commission: form.commission || 0,
+      hired_date: form.hired_date || new Date().toISOString().slice(0, 10),
       id: form.id,
     });
-  }, [isDialogOpen]);
+  }, [
+    isDialogOpen,
+    form.name,
+    form.email,
+    form.commission,
+    form.hired_date,
+    form.id,
+    reset,
+  ]);
 
   const onSubmit = (data: TechnicianFormValues) => {
-    const { id, created_at, ...rest } = data;
+    const { id: _id, created_at: _created_at, ...rest } = data;
 
     const payload = { ...rest };
 
@@ -118,17 +112,19 @@ export function AddTechnicianDialog() {
         { ...payload, id: form.id },
         {
           onSuccess: () => {
+            toast.success("Technician updated successfully!");
+            closeDialog();
             setTimeout(() => {
-              closeDialog();
-              setTimeout(() => {
-                resetEditMutation?.();
-                resetForm();
-                reset();
-                setIsSubmitting(false);
-              }, 300);
-            }, 1500);
+              resetEditMutation();
+              resetForm();
+              reset();
+              setIsSubmitting(false);
+            }, 300);
           },
           onError: (err) => {
+            const message =
+              err instanceof Error ? err.message : "Error updating technician";
+            toast.error(message);
             console.error("Error editing technician:", err);
             setIsSubmitting(false);
           },
@@ -137,17 +133,19 @@ export function AddTechnicianDialog() {
     } else {
       addTechnician(payload, {
         onSuccess: () => {
+          toast.success("Technician added successfully!");
+          closeDialog();
           setTimeout(() => {
-            closeDialog();
-            setTimeout(() => {
-              resetAddMutation?.();
-              resetForm();
-              reset();
-              setIsSubmitting(false);
-            }, 300);
-          }, 1500);
+            resetAddMutation();
+            resetForm();
+            reset();
+            setIsSubmitting(false);
+          }, 300);
         },
         onError: (err) => {
+          const message =
+            err instanceof Error ? err.message : "Error adding technician";
+          toast.error(message);
           console.error("Error adding technician:", err);
           setIsSubmitting(false);
         },
@@ -156,223 +154,181 @@ export function AddTechnicianDialog() {
   };
 
   return (
-    <>
-      <Dialog
-        open={isDialogOpen}
-        onOpenChange={(newOpen) => {
-          if (newOpen) {
-            resetAddMutation?.();
-            resetEditMutation?.();
-            openAdd();
-          } else {
-            closeDialog();
-          }
+    <Dialog
+      open={isDialogOpen}
+      onOpenChange={(newOpen) => {
+        if (newOpen) {
+          resetAddMutation();
+          resetEditMutation();
+          openAdd();
+        } else {
+          closeDialog();
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button onClick={openAdd}>
+          <Users className="mr-2 h-4 w-4" />
+          Add Technician
+        </Button>
+      </DialogTrigger>
+      <DialogContent
+        className="sm:max-w-md"
+        onCloseAutoFocus={(event) => {
+          // Prevent auto-focus on close to avoid scroll jump
+          event.preventDefault();
         }}
       >
-        <DialogTrigger asChild>
-          <Button onClick={openAdd}>
-            <Users className="mr-2 h-4 w-4" />
-            Add Technician
-          </Button>
-        </DialogTrigger>
-        <DialogContent
-          className="sm:max-w-md"
-          onCloseAutoFocus={(event) => {
-            // Prevent auto-focus on close to avoid scroll jump
-            event.preventDefault();
+        <DialogHeader>
+          <DialogTitle>
+            {isEdit ? "Edit Technician" : "Add New Technician"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Update technician details."
+              : "Register a new technician or sub-contractor."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(onSubmit)(e);
           }}
+          className="grid gap-4 py-2"
         >
-          <DialogHeader>
-            <DialogTitle>
-              {isSuccess
-                ? isEdit
-                  ? "Technician Updated!"
-                  : "Technician Added!"
-                : isError
-                  ? isEdit
-                    ? "Error Updating Technician"
-                    : "Error Adding Technician"
-                  : isEdit
-                    ? "Edit Technician"
-                    : "Add New Technician"}
-            </DialogTitle>
-            <DialogDescription>
-              {isSuccess
-                ? isEdit
-                  ? "Updated"
-                  : "Registered"
-                : isError
-                  ? isEdit
-                    ? "Error updating technician"
-                    : "Error registering technician"
-                  : isEdit
-                    ? "Update"
-                    : "Register"}{" "}
-              {isEdit
-                ? "technician details."
-                : "a new technician or sub-contractor."}
-            </DialogDescription>
-          </DialogHeader>
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="tech-name">
+              Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="tech-name"
+              placeholder="Full name"
+              disabled={isPending}
+              {...register("name", { required: "Name is required" })}
+            />
+            {errors.name && (
+              <p className="text-xs text-red-500">{errors.name.message}</p>
+            )}
+          </div>
 
-          {isSuccess ? (
-            <div className="flex flex-col items-center gap-2 py-8">
-              <div className="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/30">
-                <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                {isEdit
-                  ? "Technician updated successfully!"
-                  : "Technician added successfully!"}
+          {/* Email */}
+          <div className="space-y-2">
+            <Label htmlFor="tech-email">
+              Email <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="tech-email"
+              type="email"
+              placeholder="tech@example.com"
+              disabled={isPending}
+              {...register("email", {
+                required: "Email is required",
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: "Invalid email",
+                },
+              })}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-500">{errors.email.message}</p>
+            )}
+          </div>
+
+          {/* Commission Rate & Hire Date */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* commission rate */}
+            <div className="space-y-2">
+              <Label htmlFor="tech-commission">
+                Commission Rate % <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="tech-commission"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                max="100"
+                placeholder="e.g. 75"
+                disabled={isPending}
+                {...register("commission", {
+                  required: "Commission rate is required",
+                  min: {
+                    value: 0,
+                    message: "Commission rate must be at least 0",
+                  },
+                  max: {
+                    value: 100,
+                    message: "Commission rate must be no more than 100",
+                  },
+                })}
+              />
+              {errors.commission && (
+                <p className="text-xs text-red-500">
+                  {errors.commission.message}
+                </p>
+              )}
+              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                Business keeps{" "}
+                {(() => {
+                  const result = Math.round(
+                    100 - parseFloat(commission?.toString() ?? "0"),
+                  );
+                  return isNaN(result) ? "" : `${result}%`;
+                })()}
               </p>
             </div>
-          ) : isError ? (
-            <div className="flex flex-col items-center gap-2 py-8">
-              <div className="rounded-full bg-red-100 p-3 dark:bg-red-900/30">
-                <Users className="h-6 w-6 text-red-600 dark:text-red-400" />
-              </div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                Something went wrong: {error?.message || "Unknown error"}
-              </p>
+
+            {/* Hire Date */}
+            <div className="space-y-2">
+              <Label htmlFor="tech-hired">
+                Hire Date <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="tech-hired"
+                type="date"
+                disabled={isPending}
+                {...register("hired_date", {
+                  required: "Hire date is required",
+                })}
+              />
+              {errors.hired_date && (
+                <p className="text-xs text-red-500">
+                  {errors.hired_date.message}
+                </p>
+              )}
             </div>
-          ) : (
-            <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 py-2">
-              {/* Name */}
-              <div className="space-y-2">
-                <Label htmlFor="tech-name">
-                  Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="tech-name"
-                  placeholder="Full name"
-                  disabled={isPending}
-                  {...register("name", { required: "Name is required" })}
-                />
-                {errors.name && (
-                  <p className="text-xs text-red-500">{errors.name.message}</p>
-                )}
-              </div>
+          </div>
 
-              {/* Email */}
-              <div className="space-y-2">
-                <Label htmlFor="tech-email">
-                  Email <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="tech-email"
-                  type="email"
-                  placeholder="tech@example.com"
-                  disabled={isPending}
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                      message: "Invalid email",
-                    },
-                  })}
-                />
-                {errors.email && (
-                  <p className="text-xs text-red-500">{errors.email.message}</p>
-                )}
-              </div>
-
-              {/* Commission Rate & Hire Date */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* commission rate */}
-                <div className="space-y-2">
-                  <Label htmlFor="tech-commission">
-                    Commission Rate % <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="tech-commission"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="100"
-                    placeholder="e.g. 75"
-                    disabled={isPending}
-                    {...register("commission", {
-                      required: "Commission rate is required",
-                      min: {
-                        value: 0,
-                        message: "Commission rate must be at least 0",
-                      },
-                      max: {
-                        value: 100,
-                        message: "Commission rate must be no more than 100",
-                      },
-                    })}
-                  />
-                  {errors.commission && (
-                    <p className="text-xs text-red-500">
-                      {errors.commission.message}
-                    </p>
-                  )}
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
-                    Business keeps{" "}
-                    {(() => {
-                      const result = Math.round(
-                        100 - parseFloat(commission?.toString() ?? "0"),
-                      );
-                      return isNaN(result) ? "" : `${result}%`;
-                    })()}
-                  </p>
-                </div>
-
-                {/* Hire Date */}
-                <div className="space-y-2">
-                  <Label htmlFor="tech-hired">
-                    Hire Date <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="tech-hired"
-                    type="date"
-                    disabled={isPending}
-                    {...register("hired_date", {
-                      required: "Hire date is required",
-                    })}
-                  />
-                  {errors.hired_date && (
-                    <p className="text-xs text-red-500">
-                      {errors.hired_date.message}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <DialogFooter className="flex-row items-center justify-end">
-                <div className="flex gap-2 ml-auto">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isSubmitting || isPending}
-                    onClick={() => {
-                      closeDialog();
-                      resetForm();
-                      reset();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={
-                      isSubmitting || isPending || isSuccess || !isDirty
-                    }
-                  >
-                    {isSubmitting || isPending
-                      ? isEdit
-                        ? "Saving..."
-                        : "Adding..."
-                      : isEdit
-                        ? "Save Changes"
-                        : "Add Technician"}
-                  </Button>
-                </div>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+          <DialogFooter className="flex-row items-center justify-end">
+            <div className="flex gap-2 ml-auto">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting || isPending}
+                onClick={() => {
+                  closeDialog();
+                  resetForm();
+                  reset();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting || isPending || !isDirty}
+              >
+                {isSubmitting || isPending
+                  ? isEdit
+                    ? "Saving..."
+                    : "Adding..."
+                  : isEdit
+                    ? "Save Changes"
+                    : "Add Technician"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

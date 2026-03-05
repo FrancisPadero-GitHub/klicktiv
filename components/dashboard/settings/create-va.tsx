@@ -119,10 +119,17 @@ export function CreateLoginCredentials() {
             <UserPlus className="h-5 w-5" />
             Create Login Credentials
           </DialogTitle>
-          <DialogDescription>Create VA's login credentials.</DialogDescription>
+          <DialogDescription>
+            Create VA&apos;s login credentials.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void onSubmit(e);
+          }}
+          className="space-y-4"
+        >
           <div className="grid gap-4 grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="credentials-fname">First Name</Label>

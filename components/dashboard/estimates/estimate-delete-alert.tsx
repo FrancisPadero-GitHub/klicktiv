@@ -22,7 +22,6 @@ export function EstimateDeleteAlert({
   open,
   onOpenChange,
   onConfirm,
-  actionClassName,
 }: EstimateDeleteAlertProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

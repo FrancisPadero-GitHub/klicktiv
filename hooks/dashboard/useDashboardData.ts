@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import Decimal from "decimal.js";
+import type Decimal from "decimal.js";
 import { useAuth } from "@/components/auth-provider";
 import {
   useDashboardFilterStore,
@@ -86,10 +86,14 @@ export function useDashboardData() {
   const techSummaryQuery = useFetchTechSummary();
   const techniciansQuery = useFetchTechnicians();
 
-  const jobs = jobsQuery.data ?? [];
-  const techSummaries = techSummaryQuery.data ?? [];
-  const technicians = (techniciansQuery.data ?? []).filter(
-    (t) => t.deleted_at == null,
+  const jobs = useMemo(() => jobsQuery.data || [], [jobsQuery.data]);
+  const techSummaries = useMemo(
+    () => techSummaryQuery.data || [],
+    [techSummaryQuery.data],
+  );
+  const technicians = useMemo(
+    () => (techniciansQuery.data || []).filter((t) => t.deleted_at == null),
+    [techniciansQuery.data],
   );
 
   const missingCompany = !isAuthLoading && !companyId;
@@ -214,13 +218,13 @@ export function useDashboardData() {
       if (!dateStr) continue;
 
       const sortKey = dateStr;
-      const label = new Date(dateStr + "T00:00:00").toLocaleDateString(
-        "en-US",
-        {
-          month: "short",
-          day: "numeric",
-        },
-      );
+      // const label = new Date(dateStr + "T00:00:00").toLocaleDateString(
+      //   "en-US",
+      //   {
+      //     month: "short",
+      //     day: "numeric",
+      //   },
+      // );
 
       const existing = map.get(sortKey) ?? { gross: d(0), net: d(0) };
       const rate = techCommissionMap.get(job.technician_id ?? "") ?? 0;

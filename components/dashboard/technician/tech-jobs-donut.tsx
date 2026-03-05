@@ -24,16 +24,17 @@ export function TechJobsDonut() {
   const filteredTechs = technicians.filter((t) => (t.total_jobs ?? 0) > 0);
 
   // Prepares the data for the PieChart by mapping each technician to an object with name and value properties
-  const pieData = filteredTechs.map((t) => ({
-    name: t.name ?? "Unknown",
+  const pieData = filteredTechs.map((t, i) => ({
+    name: t.name || `Tech ${i + 1}`,
     value: t.total_jobs ?? 0,
   }));
 
   // Generates the chart configuration dynamically based on the filtered technicians, assigning a unique color to each technician slice in the chart
   const chartConfig = filteredTechs.reduce(
     (acc, t, i) => {
-      acc[t.name ?? `Tech${i}`] = {
-        label: t.name ?? "Unknown",
+      const name = t.name || `Tech ${i + 1}`;
+      acc[name] = {
+        label: name,
         color: `var(--chart-${(i % 4) + 1})`,
       };
       return acc;
@@ -83,7 +84,7 @@ export function TechJobsDonut() {
               {pieData.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={chartConfig[pieData[index].name]?.color || "#000"}
+                  fill={chartConfig[pieData[index].name].color || "#000"}
                 />
               ))}
             </Pie>

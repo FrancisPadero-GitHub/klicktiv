@@ -8,7 +8,7 @@ import {
 
 import { TopCategoriesChart } from "@/components/dashboard/jobs/job-top-categories";
 import { TechRevenueBarChart } from "@/components/dashboard/technician/tech-revenue-bar-chart";
-import { TopJobsChart } from "@/components/dashboard/technician/top-jobs-chart";
+import { TopJobsChart } from "@/components/dashboard/jobs/top-jobs-chart";
 import { LogJobDialog } from "@/components/dashboard/jobs/log-job-dialog";
 import { JobsTable } from "@/components/dashboard/jobs/jobs-table";
 import { JobSummaryCards } from "@/components/dashboard/jobs/job-summary-cards";

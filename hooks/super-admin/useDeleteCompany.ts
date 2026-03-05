@@ -17,8 +17,8 @@ export function useDeleteCompany() {
 
   return useMutation({
     mutationFn: deleteCompany,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["super-admin"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["super-admin"] });
       toast.success("Company deactivated.");
     },
     onError: (err: Error) => {

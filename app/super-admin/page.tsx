@@ -106,7 +106,7 @@ export default function SuperAdminPage() {
             bg="bg-zinc-100 dark:bg-zinc-800"
           />
           <StatCard
-            label="Total Users"
+            label="Total VA"
             value={stats?.totalUsers ?? 0}
             icon={Users}
             sub="Across all companies"

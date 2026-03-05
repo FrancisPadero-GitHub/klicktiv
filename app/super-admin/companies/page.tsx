@@ -31,10 +31,10 @@ export default function CompaniesPage() {
       ) : isError ? (
         <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600 dark:border-red-800/50 dark:bg-red-900/20 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
-          {(error as Error)?.message ?? "Failed to load companies."}
+          {(error as Error).message || "Failed to load companies."}
         </div>
       ) : (
-        <CompaniesTable companies={companies ?? []} />
+        <CompaniesTable companies={companies || []} />
       )}
     </div>
   );

@@ -32,10 +32,12 @@ export default function ReviewsPage() {
 
   useEffect(() => {
     if (openParam === "add") {
-      setSelectedReview(null);
-      setDialogMode("add");
-      setPrefilledJobId(jobIdParam);
-      setIsDialogOpen(true);
+      setTimeout(() => {
+        setSelectedReview(null);
+        setDialogMode("add");
+        setPrefilledJobId(jobIdParam);
+        setIsDialogOpen(true);
+      }, 0);
 
       router.replace("/dashboard/reviews", { scroll: false });
       return;
@@ -54,12 +56,14 @@ export default function ReviewsPage() {
       return;
     }
 
-    setSelectedReview((current) =>
-      current?.review_id === reviewToEdit.review_id ? current : reviewToEdit,
-    );
-    setDialogMode("edit");
-    setPrefilledJobId(null);
-    setIsDialogOpen(true);
+    setTimeout(() => {
+      setSelectedReview((current) =>
+        current?.review_id === reviewToEdit.review_id ? current : reviewToEdit,
+      );
+      setDialogMode("edit");
+      setPrefilledJobId(null);
+      setIsDialogOpen(true);
+    }, 0);
 
     router.replace("/dashboard/reviews", { scroll: false });
   }, [openParam, jobIdParam, reviewIdParam, reviewRecords, router]);

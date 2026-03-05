@@ -230,8 +230,8 @@ export function buildDashboardExportReport({
   const commissionMap = new Map<string, number>();
   const fallbackTechNameMap = new Map<string, string>();
   for (const technician of technicians) {
-    commissionMap.set(technician.id, technician.commission ?? 0);
-    fallbackTechNameMap.set(technician.id, technician.name ?? "Unknown");
+    commissionMap.set(technician.id, technician.commission);
+    fallbackTechNameMap.set(technician.id, technician.name);
   }
 
   const periodDates = doneJobs
@@ -1022,7 +1022,10 @@ export async function exportDashboardReportAsExcel(
   r++;
 
   // ── KPI cards — 3 cards per row, label row + value row ────────────────────
-  const lastMonthRow = report.monthlyRows[report.monthlyRows.length - 1];
+  const lastMonthRow =
+    report.monthlyRows.length > 0
+      ? report.monthlyRows[report.monthlyRows.length - 1]
+      : undefined;
   const kpiRows: Array<Array<{ label: string; value: number; fmt: string }>> = [
     [
       {
@@ -1427,7 +1430,10 @@ export async function exportDashboardReportAsPdf(
   });
 
   // ── KPI grid (3 columns of label+value pairs) ─────────────────────────────
-  const lastMonth = report.monthlyRows[report.monthlyRows.length - 1];
+  const lastMonth =
+    report.monthlyRows.length > 0
+      ? report.monthlyRows[report.monthlyRows.length - 1]
+      : undefined;
   const kpiItems = [
     {
       label: "Total Gross Revenue",

@@ -132,7 +132,7 @@ export function TopJobsChart() {
                     `$${Number(value).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
                   }
                   labelFormatter={(_, payload) => {
-                    const item = payload?.[0]?.payload;
+                    const item = payload[0]?.payload;
                     return item
                       ? `${item.address} (${item.tech}) · ${item.category}`
                       : "";

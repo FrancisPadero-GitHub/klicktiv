@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { ShieldAlert, RotateCcw } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 
 export default function GlobalError({
   error,

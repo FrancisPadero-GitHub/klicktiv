@@ -65,7 +65,7 @@ export const fetchAllProfiles = async (
     throw new Error(error.message || "Failed to fetch profiles");
   }
 
-  return (result ?? []) as ProfilesRow[];
+  return result as ProfilesRow[];
 };
 
 export function useFetchProfiles() {

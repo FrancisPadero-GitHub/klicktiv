@@ -118,14 +118,10 @@ const resolveDateRange = (filter?: JobsSummaryFilter): ResolvedDateRange => {
     return { startDate: day, endDate: day };
   }
 
-  if (mode === "range") {
-    return {
-      startDate: filter.startDate,
-      endDate: filter.endDate,
-    };
-  }
-
-  return {};
+  return {
+    startDate: filter.startDate,
+    endDate: filter.endDate,
+  };
 };
 
 // Data fetching function

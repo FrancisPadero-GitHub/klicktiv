@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface CompaniesTableProps {
-  companies: CompanyWithUserCount[];
+  companies: CompanyWithUserCount[] | null;
 }
 
 function formatDate(iso: string) {
@@ -46,8 +46,8 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
             All Companies
           </h3>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {companies.length} total &mdash;{" "}
-            {companies.filter((c) => !c.deleted_at).length} active
+            {companies?.length} total &mdash;{" "}
+            {companies?.filter((c) => !c.deleted_at).length} active
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
               </tr>
             </thead>
             <tbody>
-              {companies.length === 0 ? (
+              {companies?.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -76,7 +76,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
                   </td>
                 </tr>
               ) : (
-                companies.map((company, i) => {
+                companies?.map((company, i) => {
                   const isActive = company.deleted_at === null;
                   return (
                     <tr

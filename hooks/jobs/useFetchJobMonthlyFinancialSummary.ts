@@ -25,7 +25,7 @@ const computeMonthlySummary = (jobs: VJobsRow[]): MonthlyFinancialSummary[] => {
     if (!date) continue;
     const period = date.substring(0, 7); // "YYYY-MM"
 
-    if (!grouped[period]) {
+    if (!(period in grouped)) {
       grouped[period] = {
         period,
         gross_total: 0,
@@ -65,7 +65,7 @@ export const useFetchJobMonthlyFinancialSummary = (
         .eq("company_id", companyId);
 
       if (error) throw error;
-      return computeMonthlySummary((data as VJobsRow[]) || []);
+      return computeMonthlySummary(data as VJobsRow[]);
     },
     enabled: Boolean(companyId),
     initialData,

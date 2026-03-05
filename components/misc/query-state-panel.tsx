@@ -53,5 +53,5 @@ export function QueryStatePanel({
     );
   }
 
-  return <>{children}</>;
+  return children;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import type { Database } from "@/database.types";
 import {
   Dialog,
@@ -65,16 +65,25 @@ export function PromoteEstimateDialog({
   const [pendingValues, setPendingValues] =
     useState<PromoteEstimateFormValues | null>(null);
 
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (!open) {
+      setIsConfirmOpen(false);
+      setPendingValues(null);
+    }
+  }
+
   const {
     register,
+    control,
     handleSubmit,
     reset,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<PromoteEstimateFormValues>({
     defaultValues: {
-      subtotal: Number(estimatedAmount ?? 0),
+      subtotal: Number(estimatedAmount || 0),
       parts_total_cost: 0,
       tip_amount: 0,
       payment_method_id: "",
@@ -86,15 +95,23 @@ export function PromoteEstimateDialog({
     if (!open) return;
 
     reset({
-      subtotal: Number(estimatedAmount ?? 0),
+      subtotal: Number(estimatedAmount || 0),
       parts_total_cost: 0,
       tip_amount: 0,
       payment_method_id: "",
       status: "pending",
     });
-    setIsConfirmOpen(false);
-    setPendingValues(null);
   }, [open, estimatedAmount, reset]);
+
+  const watchedStatus = useWatch({
+    control,
+    name: "status",
+  });
+
+  const watchedPaymentMethodId = useWatch({
+    control,
+    name: "payment_method_id",
+  });
 
   const openConfirm = (values: PromoteEstimateFormValues) => {
     setPendingValues(values);
@@ -125,7 +142,7 @@ export function PromoteEstimateDialog({
           ) : null}
 
           <form
-            onSubmit={handleSubmit(openConfirm)}
+            onSubmit={(e) => void handleSubmit(openConfirm)(e)}
             className="grid gap-4 py-2"
           >
             <div className="grid grid-cols-2 gap-4">
@@ -195,7 +212,7 @@ export function PromoteEstimateDialog({
               <div className="grid gap-2">
                 <Label htmlFor="promote-status">Job Status</Label>
                 <Select
-                  value={watch("status")}
+                  value={watchedStatus}
                   onValueChange={(value) =>
                     setValue("status", value as JobStatusEnum, {
                       shouldDirty: true,
@@ -217,7 +234,7 @@ export function PromoteEstimateDialog({
             <div className="grid gap-2">
               <Label htmlFor="promote-payment">Payment Method</Label>
               <Select
-                value={watch("payment_method_id") || ""}
+                value={watchedPaymentMethodId || ""}
                 onValueChange={(value) =>
                   setValue("payment_method_id", value, {
                     shouldDirty: true,

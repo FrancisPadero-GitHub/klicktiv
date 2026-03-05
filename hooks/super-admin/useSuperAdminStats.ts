@@ -18,11 +18,11 @@ async function fetchSuperAdminStats(): Promise<SuperAdminStats> {
   if (cError) throw new Error(cError.message);
   if (uError) throw new Error(uError.message);
 
-  const comp = companies ?? [];
+  const comp = companies;
   const activeCompanies = comp.filter((c) => c.deleted_at === null).length;
 
   // unique users
-  const uniqueUsers = new Set((users ?? []).map((u) => u.user_id)).size;
+  const uniqueUsers = new Set(users.map((u) => u.user_id)).size;
 
   return {
     totalCompanies: comp.length,
@@ -33,8 +33,10 @@ async function fetchSuperAdminStats(): Promise<SuperAdminStats> {
 }
 
 export function useSuperAdminStats() {
-  return useQuery({
+  return useQuery<SuperAdminStats, Error>({
     queryKey: ["super-admin", "stats"],
     queryFn: fetchSuperAdminStats,
+    staleTime: 1000 * 60 * 2,
+    retry: 1,
   });
 }

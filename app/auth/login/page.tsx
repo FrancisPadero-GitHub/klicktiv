@@ -68,7 +68,7 @@ export default function LoginPage() {
           )}
 
           <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={(e) => void handleSubmit(onSubmit)(e)}
             noValidate
             className="space-y-5"
           >

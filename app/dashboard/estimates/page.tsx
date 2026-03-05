@@ -96,7 +96,7 @@ export default function EstimatesPage() {
         (acc, estimate) => {
           const status = estimate.estimate_status;
           if (!status) return acc;
-          acc[status] = (acc[status] ?? 0) + 1;
+          acc[status] = (acc[status] || 0) + 1;
           return acc;
         },
         {} as Record<EstimateStatus, number>,
@@ -224,7 +224,7 @@ export default function EstimatesPage() {
                     {statusLabels[status]}
                   </span>
                   <p className="mt-3 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
-                    {counts[status] ?? 0}
+                    {counts[status] || 0}
                   </p>
                 </div>
               );

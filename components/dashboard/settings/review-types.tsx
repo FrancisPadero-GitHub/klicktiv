@@ -132,7 +132,12 @@ export function ReviewTypesTable() {
                     : "Create a new review type"}
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form
+                onSubmit={(e) => {
+                  void handleSubmit(e);
+                }}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
                   <Input
@@ -264,7 +269,9 @@ export function ReviewTypesTable() {
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
-                onClick={handleDelete}
+                onClick={() => {
+                  void handleDelete();
+                }}
                 disabled={deleteMutation.isPending}
                 className="bg-red-500 hover:bg-red-600"
               >

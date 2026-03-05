@@ -148,12 +148,19 @@ export function DashboardExportButton({
             </Button>
             <Button
               variant="secondary"
-              onClick={() => runExport("current")}
+              onClick={() => {
+                void runExport("current");
+              }}
               disabled={isExporting}
             >
               {isExporting ? "Exporting..." : "Use Current Filter"}
             </Button>
-            <Button onClick={() => runExport("all")} disabled={isExporting}>
+            <Button
+              onClick={() => {
+                void runExport("all");
+              }}
+              disabled={isExporting}
+            >
               {isExporting ? "Exporting..." : "Export All"}
             </Button>
           </DialogFooter>

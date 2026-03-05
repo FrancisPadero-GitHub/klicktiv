@@ -22,8 +22,8 @@ export function useAddCompany() {
 
   return useMutation({
     mutationFn: addCompany,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["super-admin"] });
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["super-admin"] });
       toast.success("Company created successfully.");
     },
     onError: (err: Error) => {

@@ -5,12 +5,8 @@ import { QueryStatePanel } from "@/components/misc/query-state-panel";
 import { useFetchReviewRecordsSummaries } from "@/hooks/reviews/useFetchReviewSummaries";
 import {
   BadgeDollarSign,
-  BriefcaseBusiness,
-  CircleDollarSign,
-  ClipboardCheck,
   ClipboardList,
   ListChecks,
-  TrendingDown,
   WalletCards,
 } from "lucide-react";
 
@@ -18,13 +14,6 @@ const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     n,
   );
-
-const pct = (n: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "percent",
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  }).format(n);
 
 const num = (n: number) => new Intl.NumberFormat("en-US").format(n);
 

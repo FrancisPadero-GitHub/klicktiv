@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/components/auth-provider";
 import { getValidAccessToken } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -25,7 +24,6 @@ type CreateCompanyResponse = {
 
 export function useCreateCompany() {
   const queryClient = useQueryClient();
-  const { session } = useAuth();
 
   return useMutation({
     mutationFn: async ({
@@ -69,8 +67,8 @@ export function useCreateCompany() {
 
       if (!response.ok) {
         throw new Error(
-          json?.error ||
-            json?.message ||
+          json.error ||
+            json.message ||
             `Failed to create company (${response.status})`,
         );
       }
@@ -79,8 +77,10 @@ export function useCreateCompany() {
         ...json.data,
       };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["super-admin", "companies"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["super-admin", "companies"],
+      });
       toast.success("Company and admin credentials created successfully.");
     },
     onError: (error) => {

@@ -22,7 +22,6 @@ export function JobDeleteAlert({
   open,
   onOpenChange,
   onConfirm,
-  actionClassName,
 }: JobDeleteAlertProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

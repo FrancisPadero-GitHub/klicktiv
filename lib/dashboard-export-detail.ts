@@ -39,9 +39,9 @@ interface PdfDetailPageOptions {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildTechJobDetailSheet(
   report: DashboardExportReport,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   XS: any,
 ) {
   const NAVY = "1F3764";

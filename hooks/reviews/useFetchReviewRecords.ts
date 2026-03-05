@@ -19,7 +19,7 @@ const fetchReviewRecords = async (
     throw new Error(error.message || "Failed to fetch review records");
   }
 
-  return (data ?? []) as ReviewRecordRow[];
+  return data as ReviewRecordRow[];
 };
 
 export function useFetchReviewRecords() {
