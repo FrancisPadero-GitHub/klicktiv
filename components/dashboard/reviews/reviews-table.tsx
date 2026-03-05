@@ -42,6 +42,8 @@ import {
   type ReviewRecordRow,
 } from "@/hooks/reviews/useFetchReviewRecords";
 import { useDelReviewRecord } from "@/hooks/reviews/useDelReviewRecords";
+import { useBulkDelReviewRecords } from "@/hooks/reviews/useBulkDelReviewRecords";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ReviewViewDialog } from "./review-view-dialog";
 import { ReviewDeleteAlert } from "./review-delete-alert";
 
@@ -81,10 +83,13 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
     error,
   } = useFetchReviewRecords();
   const { mutate: deleteReview } = useDelReviewRecord();
+  const { mutate: bulkDeleteReviews } = useBulkDelReviewRecords();
 
   const [viewRecord, setViewRecord] = useState<ReviewRecordRow | null>(null);
   const [viewOpen, setViewOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("review_date");
@@ -101,15 +106,20 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
 
   useEffect(() => {
     if (!highlightReviewId) return;
-    setActiveHighlightId(highlightReviewId);
+    const initialTimeout = window.setTimeout(() => {
+      setActiveHighlightId(highlightReviewId);
+    }, 0);
 
-    const timeout = window.setTimeout(() => {
+    const clearHighlightTimeout = window.setTimeout(() => {
       setActiveHighlightId((current) =>
         current === highlightReviewId ? null : current,
       );
     }, 5000);
 
-    return () => window.clearTimeout(timeout);
+    return () => {
+      window.clearTimeout(initialTimeout);
+      window.clearTimeout(clearHighlightTimeout);
+    };
   }, [highlightReviewId]);
 
   const reviewTypes = useMemo(
@@ -142,6 +152,7 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
     setEndDate("");
     setReviewTypeFilter("all");
     setPaymentFilter("all");
+    setSelectedIds(new Set());
   }
 
   // Filtered and sorted data
@@ -185,17 +196,27 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
         );
       })
       .sort((a, b) => {
-        const rawAv = a[sortKey as keyof ReviewRecordRow] ?? "";
-        const rawBv = b[sortKey as keyof ReviewRecordRow] ?? "";
+        const rawAv = a[sortKey as keyof ReviewRecordRow];
+        const rawBv = b[sortKey as keyof ReviewRecordRow];
 
-        const av =
-          typeof rawAv === "string" ? rawAv.toLowerCase() : String(rawAv);
-        const bv =
-          typeof rawBv === "string" ? rawBv.toLowerCase() : String(rawBv);
+        const av: string | number =
+          sortKey === "review_amount"
+            ? Number(rawAv ?? 0)
+            : String(rawAv ?? "").toLowerCase();
 
-        if (av < bv) return sortDir === "asc" ? -1 : 1;
-        if (av > bv) return sortDir === "asc" ? 1 : -1;
-        return 0;
+        const bv: string | number =
+          sortKey === "review_amount"
+            ? Number(rawBv ?? 0)
+            : String(rawBv ?? "").toLowerCase();
+
+        let cmp = 0;
+        if (typeof av === "number" && typeof bv === "number") {
+          cmp = av - bv;
+        } else {
+          cmp = String(av).localeCompare(String(bv));
+        }
+
+        return sortDir === "asc" ? cmp : -cmp;
       });
   }, [
     records,
@@ -219,6 +240,26 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
     }
   }, [filtered, activeHighlightId]);
 
+  const toggleAll = () => {
+    setSelectedIds((prev) => {
+      const filteredIds = filtered
+        .map((r) => r.review_id)
+        .filter((id): id is string => !!id);
+      const allSelected =
+        filteredIds.length > 0 && filteredIds.every((id) => prev.has(id));
+      return allSelected ? new Set<string>() : new Set(filteredIds);
+    });
+  };
+
+  const toggleRow = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   function handleSort(k: SortKey) {
     if (sortKey === k) {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
@@ -228,7 +269,7 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
     }
   }
 
-  function SortIcon({ col }: { col: SortKey }) {
+  function renderSortIcon(col: SortKey) {
     if (sortKey !== col)
       return <ChevronsUpDown className="ml-1 inline h-3 w-3 text-zinc-400" />;
     return sortDir === "asc" ? (
@@ -294,14 +335,20 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
             <Input
               placeholder="Search work title, review type, technician, payment..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setSelectedIds(new Set());
+              }}
               className="h-8 w-full text-sm sm:w-64"
             />
 
             <Input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setSelectedIds(new Set());
+              }}
               className="h-8 w-full text-sm sm:w-40"
               title="Start date"
             />
@@ -309,14 +356,20 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
             <Input
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setSelectedIds(new Set());
+              }}
               className="h-8 w-full text-sm sm:w-40"
               title="End date"
             />
 
             <Select
               value={reviewTypeFilter}
-              onValueChange={(v) => setReviewTypeFilter(v)}
+              onValueChange={(v) => {
+                setReviewTypeFilter(v);
+                setSelectedIds(new Set());
+              }}
             >
               <SelectTrigger size="sm" className="w-full sm:w-44">
                 <SelectValue placeholder="Review Type" />
@@ -333,7 +386,10 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
 
             <Select
               value={paymentFilter}
-              onValueChange={(v) => setPaymentFilter(v)}
+              onValueChange={(v) => {
+                setPaymentFilter(v);
+                setSelectedIds(new Set());
+              }}
             >
               <SelectTrigger size="sm" className="w-full sm:w-44">
                 <SelectValue placeholder="Payment" />
@@ -351,16 +407,56 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
         )}
 
         {/* Table */}
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/50">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {selectedIds.size} selected
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedIds(new Set())}
+              className="h-7 gap-1.5 text-xs"
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setConfirmBulkDelete(true)}
+              className="h-7 gap-1.5 text-xs"
+            >
+              <Trash2 className="h-3 w-3" />
+              Delete ({selectedIds.size})
+            </Button>
+          </div>
+        )}
         <div className="min-h-96 max-h-150 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="sticky top-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 hover:bg-white dark:hover:bg-zinc-900">
                 <TableHead
+                  className="w-10 px-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Checkbox
+                    checked={
+                      filtered.length > 0 &&
+                      filtered.every(
+                        (r) => r.review_id && selectedIds.has(r.review_id),
+                      )
+                    }
+                    onCheckedChange={toggleAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+                <TableHead
                   onClick={() => handleSort("review_date")}
                   className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                 >
                   Date
-                  <SortIcon col="review_date" />
+                  {renderSortIcon("review_date")}
                 </TableHead>
                 <TableHead className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Finished Job
@@ -379,7 +475,7 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
                   className="cursor-pointer select-none text-right text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
                 >
                   Amount
-                  <SortIcon col="review_amount" />
+                  {renderSortIcon("review_amount")}
                 </TableHead>
                 <TableHead className="text-center text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Actions
@@ -390,7 +486,7 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="px-4 py-8 text-center text-sm text-zinc-400 dark:text-zinc-600"
                   >
                     No reviews match your filters.
@@ -414,8 +510,27 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
                       activeHighlightId &&
                         record.review_id === activeHighlightId &&
                         "bg-amber-50 ring-1 ring-inset ring-amber-300 dark:bg-amber-950/30 dark:ring-amber-700",
+                      record.review_id &&
+                        selectedIds.has(record.review_id) &&
+                        "bg-blue-50 dark:bg-blue-950/20",
                     )}
                   >
+                    <TableCell
+                      className="w-10 px-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked={
+                          !!record.review_id &&
+                          selectedIds.has(record.review_id)
+                        }
+                        onCheckedChange={() =>
+                          record.review_id && toggleRow(record.review_id)
+                        }
+                        aria-label={`Select ${record.work_title ?? "review"}`}
+                      />
+                    </TableCell>
+
                     {/* Date */}
                     <TableCell className="whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
                       {formatDate(record.review_date)}
@@ -523,6 +638,16 @@ export function ReviewsTable({ onEdit, highlightReviewId }: ReviewsTableProps) {
             if (confirmDeleteId) deleteReview(confirmDeleteId);
             setConfirmDeleteId(null);
             setViewOpen(false);
+          }}
+        />
+
+        <ReviewDeleteAlert
+          open={confirmBulkDelete}
+          onOpenChange={(open) => !open && setConfirmBulkDelete(false)}
+          onConfirm={() => {
+            bulkDeleteReviews(Array.from(selectedIds));
+            setSelectedIds(new Set());
+            setConfirmBulkDelete(false);
           }}
         />
       </div>
