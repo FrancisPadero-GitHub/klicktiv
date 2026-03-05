@@ -85,6 +85,7 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
     reset,
     setValue,
     watch,
+    trigger,
     formState: { errors, isDirty },
   } = useForm<JobFormValues>({
     defaultValues: form,
@@ -452,6 +453,8 @@ export function LogJobDialog({ showTrigger = true }: LogJobDialogProps) {
                         required: "Subtotal is required",
                         min: { value: 0, message: "Subtotal must be ≥ 0" },
                         valueAsNumber: true,
+                        // triggers validation for parts_total_cost when subtotal changes
+                        onChange: () => trigger("parts_total_cost"),
                       })}
                     />
                     {errors.subtotal && (
