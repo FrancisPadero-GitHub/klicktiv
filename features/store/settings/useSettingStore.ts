@@ -2,7 +2,11 @@
 
 import { create } from "zustand";
 
-export type SettingsTab = "payment-methods" | "review-types" | "profiles";
+export type SettingsTab =
+  | "payment-methods"
+  | "review-types"
+  | "profiles"
+  | "update-information";
 
 type SettingsStore = {
   activeTab: SettingsTab;

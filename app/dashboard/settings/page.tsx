@@ -4,6 +4,7 @@ import React from "react";
 import { PaymentMethodsTable } from "@/components/dashboard/settings/payment-methods";
 import { ReviewTypesTable } from "@/components/dashboard/settings/review-types";
 import { ProfilesTable } from "@/components/dashboard/settings/profiles-table";
+import UpdateInformation from "@/components/dashboard/settings/update-information";
 import { cn } from "@/lib/utils";
 import { CreditCard, ClipboardList, Users } from "lucide-react";
 import {
@@ -34,6 +35,12 @@ const tabs: Array<{
     label: "User Profiles",
     icon: Users,
     description: "View all registered profiles",
+  },
+  {
+    id: "update-information",
+    label: "Update Login Information",
+    icon: Users,
+    description: "Change password ",
   },
 ];
 
@@ -82,6 +89,7 @@ export default function SettingsPage() {
           {activeTab === "payment-methods" && <PaymentMethodsTable />}
           {activeTab === "review-types" && <ReviewTypesTable />}
           {activeTab === "profiles" && <ProfilesTable />}
+          {activeTab === "update-information" && <UpdateInformation />}
         </div>
       </div>
     </div>
