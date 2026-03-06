@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useAuth } from "@/components/auth-provider";
-import { useFetchCompany } from "@/hooks/company/useFetchCompany";
+import {
+  useFetchCompany,
+  companyQueryKey,
+} from "@/hooks/company/useFetchCompany";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,43 +78,53 @@ function StatusMessage({
   );
 }
 
-// ── Email Dialog ─────────────────────────────────────────────────────────────
-
-function UpdateEmailDialog({ currentEmail }: { currentEmail: string }) {
+function UpdateCompanyDialog({
+  companyId,
+  currentName,
+}: {
+  companyId: string;
+  currentName: string;
+}) {
   const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState(currentEmail);
+  const [name, setName] = useState(currentName);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<{
     type: "success" | "error";
     msg: string;
   } | null>(null);
 
+  const queryClient = useQueryClient();
+
+  const handleOpenChange = (o: boolean) => {
+    setOpen(o);
+    if (!o) {
+      setName(currentName);
+      setStatus(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || email === currentEmail) return;
+    if (!name.trim() || name === currentName) return;
 
     setLoading(true);
     setStatus(null);
 
-    const { error } = await supabase.auth.updateUser({ email });
+    const { error } = await supabase
+      .from("companies")
+      .update({ name: name.trim() })
+      .eq("id", companyId);
 
     setLoading(false);
 
     if (error) {
       setStatus({ type: "error", msg: error.message });
     } else {
-      setStatus({
-        type: "success",
-        msg: "Check your inbox to confirm the new email address.",
+      setStatus({ type: "success", msg: "Company name updated successfully." });
+      await queryClient.invalidateQueries({
+        queryKey: companyQueryKey(companyId),
       });
-    }
-  };
-
-  const handleOpenChange = (o: boolean) => {
-    setOpen(o);
-    if (!o) {
-      setEmail(currentEmail);
-      setStatus(null);
+      handleOpenChange(false);
     }
   };
 
@@ -124,19 +138,19 @@ function UpdateEmailDialog({ currentEmail }: { currentEmail: string }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Update Email</DialogTitle>
+          <DialogTitle>Update Company Name</DialogTitle>
           <DialogDescription>
-            A confirmation link will be sent to your new address.
+            Change the name of your company.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="new-email">New Email</Label>
+            <Label htmlFor="company-name">Company Name</Label>
             <Input
-              id="new-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="company-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               disabled={loading}
               required
             />
@@ -153,10 +167,10 @@ function UpdateEmailDialog({ currentEmail }: { currentEmail: string }) {
             </Button>
             <Button
               type="submit"
-              disabled={loading || !email.trim() || email === currentEmail}
+              disabled={loading || !name.trim() || name === currentName}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Email
+              Save Name
             </Button>
           </div>
         </form>
@@ -298,21 +312,22 @@ function UpdateInformation() {
         <CardContent className="p-0">
           {/* Company Name */}
           <div className="flex items-center gap-4 px-5">
-            <InfoRow
-              icon={Building2}
-              label="Company"
-              value={companyName}
-            />
+            <div className="flex-1">
+              <InfoRow icon={Building2} label="Company" value={companyName} />
+            </div>
+            {company_id && (
+              <UpdateCompanyDialog
+                companyId={company_id}
+                currentName={companyName}
+              />
+            )}
           </div>
 
           <div className="border-b border-zinc-100 dark:border-zinc-800 mx-5" />
 
           {/* Email */}
           <div className="flex items-center gap-4 px-5">
-            <div className="flex-1">
-              <InfoRow icon={Mail} label="Email Address" value={currentEmail} />
-            </div>
-            <UpdateEmailDialog currentEmail={currentEmail} />
+            <InfoRow icon={Mail} label="Email Address" value={currentEmail} />
           </div>
 
           <div className="border-b border-zinc-100 dark:border-zinc-800 mx-5" />

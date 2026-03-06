@@ -11,7 +11,7 @@ export default function CTASection() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 -z-10"
           >
-            <div className="absolute bottom-0 left-1/2 h-[400px] w-[700px] -translate-x-1/2 rounded-full bg-secondary opacity-30 blur-3xl" />
+            <div className="absolute bottom-0 left-1/2 h-100 w-175 -translate-x-1/2 rounded-full bg-secondary opacity-30 blur-3xl" />
           </div>
 
           <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
