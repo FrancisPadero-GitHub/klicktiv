@@ -62,6 +62,7 @@ const fmt = (n: number) =>
   );
 
 type SortKey =
+  | "created_at"
   | "work_order_id"
   | "work_title"
   | "work_order_date"
@@ -135,7 +136,7 @@ export function JobsTable() {
   const [categoryFilter, setCategoryFilter] = useState<DynamicFilter>("all");
   const [technicianFilter, setTechnicianFilter] =
     useState<DynamicFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("work_order_date");
+  const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
