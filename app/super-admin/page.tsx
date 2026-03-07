@@ -101,7 +101,7 @@ export default function SuperAdminPage() {
             label="Inactive Companies"
             value={stats?.inactiveCompanies ?? 0}
             icon={Archive}
-            sub="Soft-deleted tenants"
+            sub="Disabled tenants"
             color="text-zinc-500 dark:text-zinc-400"
             bg="bg-zinc-100 dark:bg-zinc-800"
           />

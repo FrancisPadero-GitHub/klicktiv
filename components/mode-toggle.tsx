@@ -13,8 +13,8 @@ import {
 const THEMES = [
   { value: "light", label: "Light", icon: Sun },
   { value: "dark", label: "Dark", icon: Moon },
-  { value: "caffeine_light", label: "Caffeine Light", icon: Coffee },
-  { value: "caffeine_dark", label: "Caffeine Dark", icon: Coffee },
+  // { value: "caffeine_light", label: "Caffeine Light", icon: Coffee },
+  // { value: "caffeine_dark", label: "Caffeine Dark", icon: Coffee },
 ] as const;
 
 // type ThemeValue = (typeof THEMES)[number]["value"];
