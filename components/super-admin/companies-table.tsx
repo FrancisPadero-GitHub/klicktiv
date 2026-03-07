@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Building2,
+  Loader2,
   MoreHorizontal,
   Trash2,
   RotateCcw,
@@ -45,7 +46,7 @@ function formatDate(iso: string) {
 }
 
 export function CompaniesTable({ companies }: CompaniesTableProps) {
-  const { mutate: configureCompany } = useConfigureCompany();
+  const { mutate: configureCompany, isPending } = useConfigureCompany();
   // track the company/user we intend to deactivate along with the desired
   // account state. camelCase makes the intent clearer and aligns with
   // standard React useState naming conventions.
@@ -154,8 +155,15 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
                         {isActive ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
-                                <MoreHorizontal className="h-4 w-4" />
+                              <button
+                                disabled={isPending}
+                                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                              >
+                                {isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <MoreHorizontal className="h-4 w-4" />
+                                )}
                                 <span className="sr-only">Actions</span>
                               </button>
                             </DropdownMenuTrigger>
@@ -176,8 +184,15 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
                         ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
-                                <MoreHorizontal className="h-4 w-4" />
+                              <button
+                                disabled={isPending}
+                                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                              >
+                                {isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <MoreHorizontal className="h-4 w-4" />
+                                )}
                                 <span className="sr-only">Actions</span>
                               </button>
                             </DropdownMenuTrigger>
@@ -219,15 +234,15 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate company?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will soft-delete the company. It will no longer appear as
-              active but its data will be retained. They will never be able to
-              login also. Are you sure you want to proceed?
+              This will deactivate the company and all associated user/va
+              accounts. Are you sure you want to proceed?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
+              disabled={isPending}
+              className="bg-red-600 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-600 dark:hover:bg-red-700"
               onClick={() => {
                 if (companyId) {
                   configureCompany({
