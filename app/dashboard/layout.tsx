@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
   Briefcase,
+  CalendarDays,
   FileText,
   MessageSquareText,
   Users,
@@ -28,6 +29,7 @@ import { useLogout } from "@/hooks/auth/useLogout";
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/jobs", label: "Jobs", icon: Briefcase },
+  { href: "/dashboard/calendar", label: "Jobs Calendar", icon: CalendarDays },
   { href: "/dashboard/estimates", label: "Estimates", icon: FileText },
   { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquareText },
   {
