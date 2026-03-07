@@ -658,7 +658,7 @@ export function JobsTable() {
                           {shortId(job.work_order_id ?? "—")}
                         </TableCell>
                         {/* Job Name */}
-                        <TableCell className="font-medium text-zinc-800 dark:text-zinc-200">
+                        <TableCell className="truncate max-w-xs font-medium text-zinc-800 dark:text-zinc-200">
                           {job.work_title ?? "—"}
                         </TableCell>
                         {/* Date */}
@@ -668,7 +668,7 @@ export function JobsTable() {
                             : "—"}
                         </TableCell>
                         {/* Address */}
-                        <TableCell className="font-medium text-zinc-800 dark:text-zinc-200">
+                        <TableCell className="truncate max-w-sm font-medium text-zinc-800 dark:text-zinc-200">
                           {job.address ?? "—"}
                           {job.region && (
                             <span className="ml-1.5 text-xs text-zinc-400 dark:text-zinc-500">

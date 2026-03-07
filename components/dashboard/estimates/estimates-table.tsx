@@ -455,7 +455,7 @@ export function EstimatesTable({
                   { key: "work_title" as SortKey, label: "Work Title" },
                   { key: "address" as SortKey, label: "Address" },
                   { key: "technician" as SortKey, label: "Technician" },
-                  { key: "description" as SortKey, label: "Description" },
+                  // { key: "description" as SortKey, label: "Description" },
                   { key: "estimated_amount" as SortKey, label: "Amount" },
                   { key: "estimate_status" as SortKey, label: "Status" },
                   { key: "handled_by" as SortKey, label: "Handled By" },
@@ -537,11 +537,11 @@ export function EstimatesTable({
                         : "—"}
                     </TableCell>
                     {/* Work Title */}
-                    <TableCell className="whitespace-nowrap font-medium text-zinc-800 dark:text-zinc-200">
+                    <TableCell className="truncate max-w-xs font-medium text-zinc-800 dark:text-zinc-200">
                       {estimate.work_title ?? "—"}
                     </TableCell>
                     {/* Address */}
-                    <TableCell className="font-medium text-zinc-800 dark:text-zinc-200">
+                    <TableCell className="truncate max-w-xs font-medium text-zinc-800 dark:text-zinc-200">
                       {estimate.address ?? "—"}
                       {estimate.region && (
                         <span className="ml-1.5 text-xs text-zinc-400 dark:text-zinc-500">
@@ -554,9 +554,9 @@ export function EstimatesTable({
                       {techName}
                     </TableCell>
                     {/* Description */}
-                    <TableCell className="text-zinc-600 dark:text-zinc-300">
+                    {/* <TableCell className="truncate max-w-sm text-zinc-600 dark:text-zinc-300">
                       {estimate.description ?? "—"}
-                    </TableCell>
+                    </TableCell> */}
                     {/* Amount — blue */}
                     <TableCell className="whitespace-nowrap tabular-nums font-medium text-blue-600 dark:text-blue-400">
                       {fmt(Number(estimate.estimated_amount ?? 0))}
