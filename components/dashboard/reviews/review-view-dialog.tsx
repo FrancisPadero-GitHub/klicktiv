@@ -108,7 +108,7 @@ export function ReviewViewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] w-full sm:max-w-3xl flex-col overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between gap-3 pr-6">
             <div className="min-w-0">
@@ -150,48 +150,54 @@ export function ReviewViewDialog({
           </div>
 
           {/* Details */}
-          <div className="space-y-3">
-            <InfoRow icon={Calendar} label="Review Date">
-              {record.review_date
-                ? new Date(record.review_date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "—"}
-            </InfoRow>
-
-            {record.work_order_id && (
-              <InfoRow icon={ExternalLink} label="Linked Job">
-                <Link
-                  href={`/dashboard/jobs?highlight=${record.work_order_id}`}
-                  className="font-mono text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
-                  onClick={() => onOpenChange(false)}
-                >
-                  {record.work_order_id}
-                </Link>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            {/* Left Column - Info */}
+            <div className="space-y-3">
+              <InfoRow icon={Calendar} label="Review Date">
+                {record.review_date
+                  ? new Date(record.review_date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "—"}
               </InfoRow>
-            )}
 
-            {record.technician_id && (
-              <InfoRow icon={User} label="Technician">
-                {record.technician_id}
+              {record.work_order_id && (
+                <InfoRow icon={ExternalLink} label="Linked Job">
+                  <Link
+                    href={`/dashboard/jobs?highlight=${record.work_order_id}`}
+                    className="font-mono text-xs text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    {record.work_order_id}
+                  </Link>
+                </InfoRow>
+              )}
+
+              {record.technician_id && (
+                <InfoRow icon={User} label="Technician">
+                  {record.technician_id}
+                </InfoRow>
+              )}
+            </div>
+
+            {/* Right Column - Numbers & Additional Info */}
+            <div className="space-y-3">
+              {record.category && (
+                <InfoRow icon={Tag} label="Category">
+                  {record.category}
+                </InfoRow>
+              )}
+
+              <InfoRow icon={CreditCard} label="Payment Method">
+                {record.payment_method ?? "—"}
               </InfoRow>
-            )}
 
-            {record.category && (
-              <InfoRow icon={Tag} label="Category">
-                {record.category}
+              <InfoRow icon={DollarSign} label="Tip">
+                {fmt(record.tip_amount ?? 0)}
               </InfoRow>
-            )}
-
-            <InfoRow icon={CreditCard} label="Payment Method">
-              {record.payment_method ?? "—"}
-            </InfoRow>
-
-            <InfoRow icon={DollarSign} label="Tip">
-              {fmt(record.tip_amount ?? 0)}
-            </InfoRow>
+            </div>
           </div>
 
           {/* Notes */}

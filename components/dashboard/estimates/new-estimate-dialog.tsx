@@ -361,7 +361,7 @@ export function NewEstimateDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden"
+          className="max-h-[90vh] sm:max-w-3xl flex flex-col overflow-hidden"
           onCloseAutoFocus={(event) => {
             // Prevent auto-focus on close to avoid scroll jump
             event.preventDefault();
@@ -377,6 +377,7 @@ export function NewEstimateDialog({
             className="flex flex-col flex-1 min-h-0"
           >
             <div className="overflow-y-auto flex-1 grid gap-4 py-2 pl-2 pr-1">
+              {/* Work Title */}
               <div className="grid gap-2">
                 <Label htmlFor="work_title">
                   Work Title <span className="text-red-500">*</span>
@@ -395,56 +396,8 @@ export function NewEstimateDialog({
                 ) : null}
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="technician_id">
-                  Technician <span className="text-red-500">*</span>
-                </Label>
-                <Controller
-                  name="technician_id"
-                  control={control}
-                  rules={{ required: "Technician is required" }}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={isPending || activeTechnicians.length === 0}
-                    >
-                      <SelectTrigger id="technician_id">
-                        <SelectValue
-                          placeholder={
-                            activeTechnicians.length === 0
-                              ? "No technician available"
-                              : "Select technician"
-                          }
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {activeTechnicians.length > 0 ? (
-                          activeTechnicians.map((technician) => (
-                            <SelectItem
-                              key={technician.id}
-                              value={technician.id}
-                            >
-                              {technician.name}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="__no_technician__" disabled>
-                            No technician available
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.technician_id ? (
-                  <p className="text-xs text-red-600 dark:text-red-400">
-                    {errors.technician_id.message}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
+              {/* Date & Amount */}
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="work_order_date">
                     Work Order Date <span className="text-red-500">*</span>
@@ -487,67 +440,57 @@ export function NewEstimateDialog({
                 </div>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-2">
+              {/* Technician, Status & Handled By */}
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
                 <div className="grid gap-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    placeholder="e.g. HVAC, Plumbing"
-                    {...register("category")}
+                  <Label htmlFor="technician_id">
+                    Technician <span className="text-red-500">*</span>
+                  </Label>
+                  <Controller
+                    name="technician_id"
+                    control={control}
+                    rules={{ required: "Technician is required" }}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isPending || activeTechnicians.length === 0}
+                      >
+                        <SelectTrigger id="technician_id" className="w-full">
+                          <SelectValue
+                            placeholder={
+                              activeTechnicians.length === 0
+                                ? "No technician available"
+                                : "Select technician"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {activeTechnicians.length > 0 ? (
+                            activeTechnicians.map((technician) => (
+                              <SelectItem
+                                key={technician.id}
+                                value={technician.id}
+                              >
+                                {technician.name}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="__no_technician__" disabled>
+                              No technician available
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
+                  {errors.technician_id ? (
+                    <p className="text-xs text-red-600 dark:text-red-400">
+                      {errors.technician_id.message}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div className="grid gap-2">
-                  <Label htmlFor="region">Region</Label>
-                  <Input
-                    id="region"
-                    placeholder="e.g. North, Downtown"
-                    {...register("region")}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  placeholder="e.g. 123 Main St, Suite 4"
-                  {...register("address")}
-                />
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="grid gap-2">
-                  <Label htmlFor="contact_no">Contact Number</Label>
-                  <Input
-                    id="contact_no"
-                    placeholder="e.g. +1 555 010 2233"
-                    {...register("contact_no")}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="contact_email">Contact Email</Label>
-                  <Input
-                    id="contact_email"
-                    type="email"
-                    placeholder="e.g. customer@example.com"
-                    {...register("contact_email")}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  rows={3}
-                  placeholder="Describe the scope of work for this estimate..."
-                  {...register("description")}
-                />
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-2">
                   <Label htmlFor="status">
                     Status <span className="text-red-500">*</span>
@@ -564,7 +507,7 @@ export function NewEstimateDialog({
                           (isAlreadyPromoted && field.value === "approved")
                         }
                       >
-                        <SelectTrigger id="status">
+                        <SelectTrigger id="status" className="w-full">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -597,6 +540,71 @@ export function NewEstimateDialog({
                 </div>
               </div>
 
+              {/* Category & Region */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    placeholder="e.g. HVAC, Plumbing"
+                    {...register("category")}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="region">Region</Label>
+                  <Input
+                    id="region"
+                    placeholder="e.g. North, Downtown"
+                    {...register("region")}
+                  />
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="grid gap-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  placeholder="e.g. 123 Main St, Suite 4"
+                  {...register("address")}
+                />
+              </div>
+
+              {/* Contact Information */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="contact_no">Contact Number</Label>
+                  <Input
+                    id="contact_no"
+                    placeholder="e.g. +1 555 010 2233"
+                    {...register("contact_no")}
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="contact_email">Contact Email</Label>
+                  <Input
+                    id="contact_email"
+                    type="email"
+                    placeholder="e.g. customer@example.com"
+                    {...register("contact_email")}
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  rows={3}
+                  placeholder="Describe the scope of work for this estimate..."
+                  {...register("description")}
+                />
+              </div>
+
+              {/* Notes */}
               <div className="grid gap-2">
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea

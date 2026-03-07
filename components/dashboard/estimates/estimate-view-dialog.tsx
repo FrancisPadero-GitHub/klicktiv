@@ -110,7 +110,7 @@ export function EstimateViewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden">
+      <DialogContent className="flex max-h-[90vh] w-full sm:max-w-3xl flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
             {estimate.work_title ?? "Estimate Details"}
