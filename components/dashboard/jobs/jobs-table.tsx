@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
@@ -101,17 +101,35 @@ export function JobsTable() {
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
 
   const searchParams = useSearchParams();
-  const highlightId = searchParams.get("highlight");
+  const router = useRouter();
+  const pathname = usePathname();
+  const highlightIdParam = searchParams.get("highlight");
   const highlightRowRef = useRef<HTMLTableRowElement>(null);
 
   useEffect(() => {
-    if (highlightId && highlightRowRef.current) {
+    if (highlightIdParam) {
+      const timer = setTimeout(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (params.has("highlight")) {
+          params.delete("highlight");
+          const query = params.toString();
+          router.replace(query ? `${pathname}?${query}` : pathname, {
+            scroll: false,
+          });
+        }
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightIdParam, pathname, router, searchParams]);
+
+  useEffect(() => {
+    if (highlightIdParam && highlightRowRef.current) {
       highlightRowRef.current.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
     }
-  }, [highlightId, jobs]);
+  }, [highlightIdParam, jobs]);
 
   // Build tech name & commission lookup maps
   const techNameMap = useMemo(() => {
@@ -579,7 +597,8 @@ export function JobsTable() {
                       ? techCommissionMap.get(job.technician_id)
                       : null;
                     const isHighlighted =
-                      !!highlightId && job.work_order_id === highlightId;
+                      !!highlightIdParam &&
+                      job.work_order_id === highlightIdParam;
 
                     const editPayload = {
                       work_order_id: job.work_order_id ?? "",
