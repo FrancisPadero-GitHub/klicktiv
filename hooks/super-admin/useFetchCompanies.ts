@@ -11,7 +11,7 @@ export interface CompanyWithUserCount extends CompanyRow {
 async function fetchCompanies(): Promise<CompanyWithUserCount[]> {
   const { data: companies, error } = await supabase
     .from("companies")
-    .select("id, name, created_at, deleted_at")
+    .select("*")
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);

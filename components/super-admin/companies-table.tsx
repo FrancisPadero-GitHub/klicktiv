@@ -1,10 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, MoreHorizontal, Trash2, Users } from "lucide-react";
+import {
+  Building2,
+  MoreHorizontal,
+  Trash2,
+  RotateCcw,
+  Users,
+} from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import type { CompanyWithUserCount } from "@/hooks/super-admin/useFetchCompanies";
-import { useDeleteCompany } from "@/hooks/super-admin/useDeleteCompany";
+import {
+  useConfigureCompany,
+  type ConfigureCompanyInput,
+} from "@/hooks/super-admin/useConfigureCompany";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,8 +45,21 @@ function formatDate(iso: string) {
 }
 
 export function CompaniesTable({ companies }: CompaniesTableProps) {
-  const deleteCompany = useDeleteCompany();
-  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const { mutate: configureCompany } = useConfigureCompany();
+  // track the company/user we intend to deactivate along with the desired
+  // account state. camelCase makes the intent clearer and aligns with
+  // standard React useState naming conventions.
+  const [companyId, setCompanyId] = useState<
+    ConfigureCompanyInput["companyId"] | null
+  >(null);
+
+  const [userId, setUserId] = useState<ConfigureCompanyInput["userId"] | null>(
+    null,
+  );
+
+  const [accountState, setAccountState] = useState<
+    ConfigureCompanyInput["state"] | null
+  >(null);
 
   return (
     <>
@@ -128,7 +151,7 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
 
                       {/* Actions */}
                       <td className="px-4 py-3">
-                        {isActive && (
+                        {isActive ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
@@ -139,10 +162,38 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
                                 className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
-                                onClick={() => setConfirmId(company.id)}
+                                onClick={() => {
+                                  setCompanyId(company.id);
+                                  setUserId(company.auth_id);
+                                  setAccountState(true); // deletes the company and disables the user account
+                                }}
                               >
                                 <Trash2 className="mr-2 h-3.5 w-3.5" />
                                 Deactivate
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Actions</span>
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="text-green-600 dark:text-green-400 focus:text-green-600 dark:focus:text-green-400"
+                                onClick={() => {
+                                  configureCompany({
+                                    companyId: company.id,
+                                    userId: company.auth_id,
+                                    state: false, // enables the company and re-enables the user account
+                                  });
+                                }}
+                              >
+                                <RotateCcw className="mr-2 h-3.5 w-3.5" />
+                                Enable
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -159,15 +210,18 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
 
       {/* Deactivate confirmation */}
       <AlertDialog
-        open={!!confirmId}
-        onOpenChange={(open) => !open && setConfirmId(null)}
+        open={accountState === true}
+        onOpenChange={(open) =>
+          !open && (setCompanyId(null), setAccountState(null))
+        }
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Deactivate company?</AlertDialogTitle>
             <AlertDialogDescription>
               This will soft-delete the company. It will no longer appear as
-              active but its data will be retained.
+              active but its data will be retained. They will never be able to
+              login also. Are you sure you want to proceed?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -175,9 +229,15 @@ export function CompaniesTable({ companies }: CompaniesTableProps) {
             <AlertDialogAction
               className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700"
               onClick={() => {
-                if (confirmId) {
-                  deleteCompany.mutate(confirmId);
-                  setConfirmId(null);
+                if (companyId) {
+                  configureCompany({
+                    companyId,
+                    userId,
+                    state: accountState,
+                  });
+                  setCompanyId(null);
+                  setUserId(null);
+                  setAccountState(null);
                 }
               }}
             >
