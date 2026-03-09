@@ -106,7 +106,7 @@ export function ReviewTypesTable() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-xl font-semibold text-foreground">
               Review Types
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -192,23 +192,23 @@ export function ReviewTypesTable() {
             {reviewTypes.map((reviewType) => (
               <Card
                 key={reviewType.id}
-                className="group border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-none hover:shadow-sm transition-shadow"
+                className="group border-border bg-card shadow-none hover:shadow-sm transition-shadow"
               >
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <ClipboardList className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary">
+                        <ClipboardList className="h-4 w-4 text-secondary-foreground/60" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">
+                        <p className="font-medium text-foreground truncate">
                           {reviewType.name}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                          <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
                             ${reviewType.price.toFixed(2)}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground/70">
                             {new Date(
                               reviewType.created_at,
                             ).toLocaleDateString()}
@@ -228,10 +228,10 @@ export function ReviewTypesTable() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-950"
+                        className="h-8 w-8 p-0 hover:bg-destructive/10"
                         onClick={() => setDeleteId(reviewType.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -240,11 +240,11 @@ export function ReviewTypesTable() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-              <ClipboardList className="h-5 w-5 text-zinc-500" />
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary mb-4">
+              <ClipboardList className="h-5 w-5 text-muted-foreground/60" />
             </div>
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            <p className="text-sm font-medium text-foreground">
               No review types yet
             </p>
             <p className="text-sm text-muted-foreground mt-1">
@@ -273,7 +273,7 @@ export function ReviewTypesTable() {
                   void handleDelete();
                 }}
                 disabled={deleteMutation.isPending}
-                className="bg-red-500 hover:bg-red-600"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {deleteMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

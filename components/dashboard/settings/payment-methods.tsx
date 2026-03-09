@@ -116,7 +116,7 @@ export function PaymentMethodsTable() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-xl font-semibold text-foreground">
               Payment Methods
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
@@ -161,12 +161,12 @@ export function PaymentMethodsTable() {
                     required
                     className={
                       isDuplicate
-                        ? "border-amber-400 focus-visible:ring-amber-400"
+                        ? "border-primary/50 focus-visible:ring-primary/50"
                         : ""
                     }
                   />
                   {isDuplicate && (
-                    <p className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                    <p className="flex items-center gap-1.5 text-xs text-primary/80">
                       <AlertTriangle className="h-3.5 w-3.5 shrink-0" />A
                       payment method with this name already exists.
                     </p>
@@ -197,19 +197,19 @@ export function PaymentMethodsTable() {
             {methods.map((method) => (
               <Card
                 key={method.id}
-                className="group border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-none hover:shadow-sm transition-shadow"
+                className="group border-border bg-card shadow-none hover:shadow-sm transition-shadow"
               >
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                        <CreditCard className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary">
+                        <CreditCard className="h-4 w-4 text-secondary-foreground/60" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-50 truncate">
+                        <p className="font-medium text-foreground truncate">
                           {method.name}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground/70 mt-0.5">
                           Added{" "}
                           {new Date(method.created_at).toLocaleDateString()}
                         </p>
@@ -227,10 +227,10 @@ export function PaymentMethodsTable() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 hover:bg-red-50 dark:hover:bg-red-950"
+                        className="h-8 w-8 p-0 hover:bg-destructive/10"
                         onClick={() => setDeleteId(method.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -239,11 +239,11 @@ export function PaymentMethodsTable() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-16 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 mb-4">
-              <CreditCard className="h-5 w-5 text-zinc-500" />
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/50 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-secondary mb-4">
+              <CreditCard className="h-5 w-5 text-muted-foreground/60" />
             </div>
-            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            <p className="text-sm font-medium text-foreground">
               No payment methods yet
             </p>
             <p className="text-sm text-muted-foreground mt-1">
@@ -272,7 +272,7 @@ export function PaymentMethodsTable() {
                   void handleDelete();
                 }}
                 disabled={deleteMutation.isPending}
-                className="bg-red-500 hover:bg-red-600"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {deleteMutation.isPending && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -308,7 +308,7 @@ export function CreateLoginCredentials() {
             </Select>
           </div> */}
 
-          <div className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/40 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
+          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
             <Shield className="h-4 w-4 mt-0.5 shrink-0" />
             Credentials are created through Supabase Edge Functions.
           </div>

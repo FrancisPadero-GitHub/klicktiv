@@ -44,12 +44,12 @@ function InfoRow({
 }) {
   return (
     <div className="flex items-center gap-4 py-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <Icon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary">
+        <Icon className="h-4 w-4 text-secondary-foreground/60" />
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50 truncate">
+        <p className="text-sm font-medium text-foreground truncate">
           {masked ? "••••••••••••" : value}
         </p>
       </div>
@@ -67,8 +67,8 @@ function StatusMessage({
   const Icon = type === "success" ? CheckCircle2 : AlertCircle;
   const colorClass =
     type === "success"
-      ? "text-emerald-600 dark:text-emerald-400"
-      : "text-red-600 dark:text-red-400";
+      ? "text-success"
+      : "text-destructive";
 
   return (
     <p className={`flex items-center gap-1.5 text-xs ${colorClass}`}>
@@ -265,7 +265,7 @@ function UpdatePasswordDialog() {
               disabled={loading}
               required
               className={
-                mismatch ? "border-red-400 focus-visible:ring-red-400" : ""
+                mismatch ? "border-destructive focus-visible:ring-destructive" : ""
               }
             />
             {mismatch && (
@@ -305,7 +305,7 @@ function UpdateInformation() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl font-semibold text-foreground">
           Login Information
         </h2>
         <p className="text-sm text-muted-foreground mt-0.5">
@@ -313,7 +313,7 @@ function UpdateInformation() {
         </p>
       </div>
 
-      <Card className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-none">
+      <Card className="border-border bg-card shadow-none">
         <CardContent className="p-0">
           {/* Company Name */}
           <div className="flex items-center gap-4 px-5">
@@ -328,14 +328,14 @@ function UpdateInformation() {
             )}
           </div>
 
-          <div className="border-b border-zinc-100 dark:border-zinc-800 mx-5" />
+          <div className="border-b border-border mx-5" />
 
           {/* Email */}
           <div className="flex items-center gap-4 px-5">
             <InfoRow icon={Mail} label="Email Address" value={currentEmail} />
           </div>
 
-          <div className="border-b border-zinc-100 dark:border-zinc-800 mx-5" />
+          <div className="border-b border-border mx-5" />
 
           {/* Password */}
           <div className="flex items-center gap-4 px-5">

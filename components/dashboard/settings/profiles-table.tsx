@@ -22,8 +22,8 @@ function RoleBadge({ role }: { role: string | null }) {
       className={cn(
         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         isAdmin
-          ? "bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900"
-          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
+          ? "bg-primary text-primary-foreground"
+          : "bg-secondary text-secondary-foreground",
       )}
     >
       {role ?? "user"}
@@ -46,7 +46,7 @@ export function ProfilesTable() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
               <Users className="h-5 w-5" />
               User Profiles
             </h2>
@@ -60,23 +60,23 @@ export function ProfilesTable() {
 
         {/* Table */}
         {profiles && profiles.length > 0 ? (
-          <div className="max-h-150 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <div className="max-h-150 rounded-lg border border-border overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                  <TableHead className="font-semibold text-zinc-700 dark:text-zinc-300">
+                <TableRow className="bg-muted/50 dark:bg-card/50 hover:bg-muted/50 dark:hover:bg-card/50">
+                  <TableHead className="font-semibold text-foreground">
                     Name
                   </TableHead>
-                  <TableHead className="font-semibold text-zinc-700 dark:text-zinc-300">
+                  <TableHead className="font-semibold text-foreground">
                     Username
                   </TableHead>
-                  <TableHead className="font-semibold text-zinc-700 dark:text-zinc-300">
+                  <TableHead className="font-semibold text-foreground">
                     Role
                   </TableHead>
-                  <TableHead className="font-semibold text-zinc-700 dark:text-zinc-300">
+                  <TableHead className="font-semibold text-foreground">
                     Email
                   </TableHead>
-                  <TableHead className="font-semibold text-zinc-700 dark:text-zinc-300 text-right">
+                  <TableHead className="font-semibold text-foreground text-right">
                     Last Updated
                   </TableHead>
                 </TableRow>
@@ -100,22 +100,22 @@ export function ProfilesTable() {
                   return (
                     <TableRow
                       key={profile.id}
-                      className="border-zinc-200 dark:border-zinc-800"
+                      className="border-border"
                     >
-                      <TableCell className="font-medium text-zinc-900 dark:text-zinc-50">
+                      <TableCell className="font-medium text-foreground">
                         {fullName || (
-                          <span className="text-zinc-400 italic">
+                          <span className="text-muted-foreground/50 italic">
                             No name set
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-zinc-600 dark:text-zinc-400">
+                      <TableCell className="text-muted-foreground">
                         {profile.username ? (
                           <span className="font-mono text-sm">
                             @{profile.username}
                           </span>
                         ) : (
-                          <span className="text-zinc-400 italic">-</span>
+                          <span className="text-muted-foreground/50 italic">-</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -126,7 +126,7 @@ export function ProfilesTable() {
                       <TableCell>
                         <RoleBadge role={profile.email} />
                       </TableCell>
-                      <TableCell className="text-right text-sm text-zinc-500 dark:text-zinc-400">
+                      <TableCell className="text-right text-sm text-muted-foreground">
                         {updatedAt}
                       </TableCell>
                     </TableRow>
@@ -136,7 +136,7 @@ export function ProfilesTable() {
             </Table>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center text-zinc-400 dark:text-zinc-600">
+          <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground/50">
             <Users className="h-10 w-10 mb-3 opacity-40" />
             <p className="text-sm font-medium">No profiles found</p>
             <p className="text-xs mt-1">

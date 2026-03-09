@@ -75,7 +75,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-foreground">
           Settings
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -95,14 +95,14 @@ export default function SettingsPage() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors w-full",
                 activeTab === id
-                  ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                  : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50",
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="hidden sm:block">
                 <span className="block font-medium leading-tight">{label}</span>
-                <span className="block text-xs text-muted-foreground leading-tight mt-0.5">
+                <span className="block text-xs text-muted-foreground/70 leading-tight mt-0.5">
                   {description}
                 </span>
               </span>
