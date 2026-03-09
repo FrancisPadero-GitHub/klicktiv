@@ -87,22 +87,21 @@ export function TechnicianCardsGrid() {
             <div
               key={tech.technician_id}
               className={cn(
-                "w-md shrink-0 rounded-xl border bg-white p-6 dark:bg-zinc-900",
-                "border-zinc-200 dark:border-zinc-800",
+                "w-md shrink-0 rounded-xl border p-6 bg-card border-border",
                 tech.isDeleted && "opacity-70",
               )}
             >
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-sm font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
                     {initials}
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                    <p className="text-sm font-semibold text-foreground">
                       {tech.name || "Unknown"}
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-xs text-muted-foreground">
                       {tech.email || "-"}
                     </p>
                   </div>
@@ -118,51 +117,51 @@ export function TechnicianCardsGrid() {
               </div>
 
               {/* Details */}
-              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+              <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
                 <div>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <p className="text-xs text-muted-foreground/70">
                     Commission Rate
                   </p>
-                  <p className="mt-0.5 text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                  <p className="mt-0.5 text-lg font-bold text-foreground">
                     {tech.commission ?? 0} %
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <p className="text-xs text-muted-foreground/70">
                     Jobs Completed
                   </p>
-                  <p className="mt-0.5 text-lg font-bold text-zinc-900 dark:text-zinc-50">
+                  <p className="mt-0.5 text-lg font-bold text-foreground">
                     {tech.total_jobs ?? 0}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <p className="text-xs text-muted-foreground/70">
                     Total Gross
                   </p>
-                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-foreground/80">
                     {fmt(tech.gross_revenue ?? 0)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <p className="text-xs text-muted-foreground/70">
                     Company Net Revenue Gained
                   </p>
-                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-cyan-800 dark:text-cyan-200">
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-primary/80">
                     {fmt(tech.total_company_net ?? 0)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                  <p className="text-xs text-muted-foreground/70">
                     Tech Total Earned
                   </p>
-                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-success">
                     {fmt(tech.total_commission_earned ?? 0)}
                   </p>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="mt-4 border-t border-zinc-100 pt-4 text-xs text-zinc-400 dark:border-zinc-800 dark:text-zinc-500">
+              <div className="mt-4 border-t border-border pt-4 text-xs text-muted-foreground/60">
                 <span>
                   {tech.isDeleted
                     ? "Removed"

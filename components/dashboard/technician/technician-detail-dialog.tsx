@@ -49,17 +49,17 @@ export function TechnicianDetailDialog({
           <>
             <DialogHeader>
               <div className="flex items-center gap-3 pr-6">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold text-secondary-foreground">
                   {(selectedTech.name || "?")
                     .split(" ")
                     .map((n) => n[0])
                     .join("")}
                 </div>
                 <div className="min-w-0">
-                  <DialogTitle className="truncate text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                  <DialogTitle className="truncate text-lg font-semibold text-foreground">
                     {selectedTech.name || "Unknown"}
                   </DialogTitle>
-                  <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-0.5 text-sm text-muted-foreground">
                     {selectedTech.email || "No email"}
                   </p>
                 </div>
@@ -72,41 +72,41 @@ export function TechnicianDetailDialog({
                   {
                     label: "Total Gross",
                     value: formatCurrency(selectedTech.gross_revenue ?? 0),
-                    className: "text-zinc-900 dark:text-zinc-100",
+                    className: "text-foreground",
                   },
                   {
                     label: "Company Net",
                     value: formatCurrency(selectedTech.total_company_net ?? 0),
-                    className: "text-cyan-700 dark:text-cyan-400",
+                    className: "text-primary/80",
                   },
                   {
                     label: "Tech Earned",
                     value: formatCurrency(
                       selectedTech.total_commission_earned ?? 0,
                     ),
-                    className: "text-emerald-600 dark:text-emerald-400",
+                    className: "text-success",
                   },
                   {
                     label: "Jobs",
                     value: String(selectedTech.total_jobs ?? 0),
-                    className: "text-zinc-900 dark:text-zinc-100",
+                    className: "text-foreground",
                   },
                   {
                     label: "Parts",
                     value: formatCurrency(selectedTech.total_parts ?? 0),
-                    className: "text-zinc-500 dark:text-zinc-400",
+                    className: "text-muted-foreground",
                   },
                   {
                     label: "Tips",
                     value: formatCurrency(selectedTech.total_tips ?? 0),
-                    className: "text-zinc-500 dark:text-zinc-400",
+                    className: "text-muted-foreground",
                   },
                 ].map(({ label, value, className }) => (
                   <div
                     key={label}
-                    className="flex flex-col justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-700 dark:bg-zinc-800/50"
+                    className="flex flex-col justify-between rounded-lg border border-border bg-muted/30 px-4 py-3"
                   >
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/60">
                       {label}
                     </p>
                     <p
@@ -123,42 +123,42 @@ export function TechnicianDetailDialog({
 
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
-                    <Percent className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary">
+                    <Percent className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/60">
                       Commission Rate
                     </p>
-                    <p className="mt-0.5 text-sm text-zinc-800 dark:text-zinc-200">
+                    <p className="mt-0.5 text-sm text-foreground/80">
                       {selectedTech.commission ?? 0}%
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
-                    <Mail className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/60">
                       Email
                     </p>
-                    <p className="mt-0.5 text-sm text-zinc-800 dark:text-zinc-200">
+                    <p className="mt-0.5 text-sm text-foreground/80">
                       {selectedTech.email || "-"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
-                    <CalendarDays className="h-3.5 w-3.5 text-zinc-500 dark:text-zinc-400" />
+                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-secondary">
+                    <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/60">
                       Hired
                     </p>
-                    <p className="mt-0.5 text-sm text-zinc-800 dark:text-zinc-200">
+                    <p className="mt-0.5 text-sm text-foreground/80">
                       {selectedTech.hired_date
                         ? new Date(selectedTech.hired_date).toLocaleDateString(
                             "en-US",
@@ -175,7 +175,7 @@ export function TechnicianDetailDialog({
               </div>
             </div>
 
-            <DialogFooter className="border-t border-zinc-200 pt-4 dark:border-zinc-700 sm:justify-between">
+            <DialogFooter className="border-t border-border pt-4 sm:justify-between">
               <DialogClose asChild>
                 <Button variant="outline" size="sm">
                   Close

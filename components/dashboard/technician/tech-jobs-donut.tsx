@@ -50,12 +50,12 @@ export function TechJobsDonut() {
       loadingMessage="Loading jobs distribution chart..."
       className="min-h-80"
     >
-      <div className="h-full rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="h-full rounded-xl border border-border bg-card p-6">
         <div className="mb-4">
-          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+          <h3 className="text-base font-semibold text-foreground">
             Jobs Distribution
           </h3>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-muted-foreground">
             Total jobs per technician - YTD
           </p>
         </div>

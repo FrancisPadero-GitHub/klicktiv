@@ -69,15 +69,18 @@ export function TechRevenueDonut({ data }: TechRevenueDonutProps) {
               cy="50%"
               innerRadius={60}
               outerRadius={100}
-              paddingAngle={3}
+              paddingAngle={2}
               dataKey="value"
               nameKey="name"
               strokeWidth={2}
+              stroke="var(--card)"
+              className="outline-none"
             >
               {data.map((_, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={COLORS[index % COLORS.length]}
+                  className="transition-all duration-300 hover:opacity-80"
                 />
               ))}
             </Pie>

@@ -16,10 +16,10 @@ export default function TechniciansPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
             Technicians
           </h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             {isLoading ? "Counting technicians..." : `${activeCount} active`}
           </p>
         </div>
@@ -35,7 +35,7 @@ export default function TechniciansPage() {
 
       <div className="grid ">
         {/* Technician Cards Grid */}
-        <div className="h-full overflow-hidden p-2 bg-zinc-200/50 dark:bg-zinc-800 rounded-xl">
+        <div className="h-full overflow-hidden p-2 bg-muted/30 dark:bg-card/50 rounded-xl border border-border">
           <TechnicianCardsGrid />
         </div>
       </div>

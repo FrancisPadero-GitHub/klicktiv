@@ -77,12 +77,12 @@ export function TechRevenueBarChart() {
       loadingMessage="Loading technician revenue chart..."
       className="min-h-80"
     >
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-border bg-card p-6">
         <div className="mb-4">
-          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+          <h3 className="text-base font-semibold text-foreground">
             Revenue Split by Technician
           </h3>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-muted-foreground">
             Company net vs tech pay - YTD
           </p>
         </div>
@@ -115,13 +115,15 @@ export function TechRevenueBarChart() {
               dataKey="companyNet"
               stackId="a"
               fill="var(--color-companyNet)"
-              radius={[0, 0, 0, 0]}
+              radius={[1, 1, 0, 0]}
+              className="transition-all duration-300 hover:opacity-80"
             />
             <Bar
               dataKey="techPay"
               stackId="a"
               fill="var(--color-techPay)"
               radius={[4, 4, 0, 0]}
+              className="transition-all duration-300 hover:opacity-80"
             />
           </BarChart>
         </ChartContainer>

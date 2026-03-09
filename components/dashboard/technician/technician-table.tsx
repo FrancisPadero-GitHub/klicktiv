@@ -224,11 +224,11 @@ export function TechnicianTable() {
 
   function SortIcon({ col }: { col: SortKey }) {
     if (sortKey !== col)
-      return <ChevronsUpDown className="ml-1 inline h-3 w-3 text-zinc-400" />;
+      return <ChevronsUpDown className="ml-1 inline h-3 w-3 text-muted-foreground/50" />;
     return sortDir === "asc" ? (
-      <ChevronUp className="ml-1 inline h-3 w-3 text-zinc-600 dark:text-zinc-300" />
+      <ChevronUp className="ml-1 inline h-3 w-3 text-foreground" />
     ) : (
-      <ChevronDown className="ml-1 inline h-3 w-3 text-zinc-600 dark:text-zinc-300" />
+      <ChevronDown className="ml-1 inline h-3 w-3 text-foreground" />
     );
   }
 
@@ -273,14 +273,14 @@ export function TechnicianTable() {
         loadingMessage="Loading technicians table..."
         className="min-h-80"
       >
-        <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-border bg-card">
           {/* Toolbar */}
-          <div className="flex flex-col gap-3 border-b border-zinc-200 p-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              <h3 className="text-base font-semibold text-foreground">
                 Technicians
               </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-muted-foreground">
                 {filtered.length} of {mergedData.length} technicians
               </p>
             </div>
@@ -298,8 +298,8 @@ export function TechnicianTable() {
                     onClick={() => setCommissionFilter(f.value)}
                     className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                       commissionFilter === f.value
-                        ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900"
-                        : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-muted"
                     }`}
                   >
                     {f.label}
@@ -309,8 +309,8 @@ export function TechnicianTable() {
                   onClick={() => setShowRemoved(!showRemoved)}
                   className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                     showRemoved
-                      ? "bg-rose-600 text-white dark:bg-rose-700"
-                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                      ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      : "bg-secondary text-secondary-foreground hover:bg-muted"
                   }`}
                 >
                   Removed
@@ -322,8 +322,8 @@ export function TechnicianTable() {
           {/* Table */}
           <div className="min-h-96 max-h-150 overflow-x-auto">
             <Table className="min-w-225 text-sm">
-              <TableHeader className="sticky top-0 bg-white dark:bg-zinc-900">
-                <TableRow className="border-zinc-200 dark:border-zinc-800">
+              <TableHeader className="sticky top-0 bg-card">
+                <TableRow className="border-border">
                   {(
                     [
                       { key: "name", label: "Name" },
@@ -335,16 +335,16 @@ export function TechnicianTable() {
                     <TableHead
                       key={key}
                       onClick={() => handleSort(key)}
-                      className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      className="cursor-pointer select-none text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
                     >
                       {label}
                       <SortIcon col={key} />
                     </TableHead>
                   ))}
-                  <TableHead className="text-xs font-semibold uppercase  text-zinc-500 dark:text-zinc-400">
+                  <TableHead className="text-xs font-semibold uppercase text-muted-foreground">
                     Contact
                   </TableHead>
-                  <TableHead className="text-center text-xs font-semibold uppercase  text-zinc-500 dark:text-zinc-400">
+                  <TableHead className="text-center text-xs font-semibold uppercase text-muted-foreground">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -354,7 +354,7 @@ export function TechnicianTable() {
                   <TableRow>
                     <TableCell
                       colSpan={9}
-                      className="py-8 text-center text-sm text-zinc-400 dark:text-zinc-600"
+                      className="py-8 text-center text-sm text-muted-foreground/50"
                     >
                       No technicians match your filters.
                     </TableCell>
@@ -373,41 +373,41 @@ export function TechnicianTable() {
                         onClick={() => canView && setSelectedTech(tech)}
                         className={cn(
                           canView
-                            ? "cursor-pointer border-zinc-100 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50"
-                            : "cursor-default border-zinc-100 dark:border-zinc-800",
+                            ? "cursor-pointer border-border transition-colors hover:bg-muted/30"
+                            : "cursor-default border-border",
                           isRemoved &&
-                            "opacity-50 line-through decoration-zinc-400",
+                            "opacity-50 line-through decoration-muted-foreground",
                         )}
                       >
                         {/* Name */}
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
                               {initials}
                             </div>
-                            <span className="font-medium text-zinc-900 dark:text-zinc-50">
+                            <span className="font-medium text-foreground">
                               {tech.name || "Unknown"}
                             </span>
                           </div>
                         </TableCell>
                         {/* Commission */}
-                        <TableCell className="text-zinc-700 dark:text-zinc-300">
+                        <TableCell className="text-muted-foreground">
                           {tech.commission ?? 0} %
                         </TableCell>
                         {/* Jobs */}
-                        <TableCell className="font-semibold text-zinc-900 dark:text-zinc-50">
+                        <TableCell className="font-semibold text-foreground">
                           {tech.total_jobs ?? 0}
                         </TableCell>
 
                         {/* Hired */}
-                        <TableCell className="text-zinc-500 dark:text-zinc-400">
+                        <TableCell className="text-muted-foreground">
                           {tech.hired_date
                             ? new Date(tech.hired_date).toLocaleDateString()
                             : "N/A"}
                         </TableCell>
                         {/* Contact */}
                         <TableCell>
-                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <span className="text-xs text-muted-foreground">
                             {tech.email || "-"}
                           </span>
                         </TableCell>
@@ -421,7 +421,7 @@ export function TechnicianTable() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <MoreHorizontal className="h-4 w-4" />

@@ -267,7 +267,7 @@ export function AddTechnicianDialog() {
                   {errors.commission.message}
                 </p>
               )}
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 Business keeps{" "}
                 {(() => {
                   const result = Math.round(
