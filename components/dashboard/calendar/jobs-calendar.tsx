@@ -439,6 +439,7 @@ export function JobsCalendar() {
             tip_amount: viewJob.tip_amount ?? 0,
             notes: viewJob.notes ?? "",
             status: viewJob.status ?? "pending",
+            name: viewJob.name ?? "",
           });
           setViewOpen(false);
         }}
