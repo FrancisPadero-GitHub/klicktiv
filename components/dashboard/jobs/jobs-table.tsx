@@ -99,7 +99,7 @@ const PAGE_SIZE = 10;
 const statusColors: Record<string, string> = {
   done: "bg-success/10 text-success",
   cancelled: "bg-destructive/10 text-destructive",
-  pending: "bg-primary/10 text-primary",
+  pending: "bg-info/10 text-info",
 };
 
 function getPageNumbers(
@@ -744,6 +744,8 @@ export function JobsTable() {
                         }}
                         className={cn(
                           "cursor-pointer transition-colors hover:bg-muted/50",
+                          job.payment_status === "partial" && "bg-warning/10",
+                          job.status === "pending" && "bg-info/10",
                           isHighlighted &&
                             "bg-primary/10 ring-1 ring-inset ring-primary/20",
                           job.work_order_id &&

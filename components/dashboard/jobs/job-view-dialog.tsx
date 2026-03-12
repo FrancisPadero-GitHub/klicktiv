@@ -57,15 +57,13 @@ const paymentColors: Record<string, string> = {
 
 export const paymentStatusColors: Record<string, string> = {
   full: "bg-success/10 text-success",
-  partial:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  partial: "bg-warning/10 text-warning",
 };
 
 const statusColors: Record<string, string> = {
   done: "bg-success/10 text-success",
   cancelled: "bg-destructive/10 text-destructive",
-  pending:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  pending: "bg-info/10 text-info",
 };
 
 interface JobViewDialogProps {
