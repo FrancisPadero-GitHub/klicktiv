@@ -81,11 +81,23 @@ export function useAddJob() {
         exact: false,
       });
       await queryClient.invalidateQueries({
+        queryKey: ["technicians", "summary"],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({
         queryKey: ["estimates"],
         exact: false,
       });
       await queryClient.invalidateQueries({
         queryKey: ["jobs", "work-orders"],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["reviews", "review-records"],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["reviews", "review-records-summaries"],
         exact: false,
       });
     },
