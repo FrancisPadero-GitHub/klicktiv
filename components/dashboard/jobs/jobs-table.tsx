@@ -70,10 +70,13 @@ const shortId = (value: string | null) => {
   return value.slice(0, 8);
 };
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    n,
-  );
+const fmt = (n: number) => {
+  if (n === 0) return "0";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(n);
+};
 
 type SortKey =
   | "created_at"
@@ -664,10 +667,12 @@ export function JobsTable() {
                       { key: "subtotal", label: "Subtotal" },
                       { key: "deposits", label: "Deposit" },
                       { key: "payment_status", label: "Payment" },
+                      { key: "tip_amount", label: "Tip" },
                       { key: "parts_total_cost", label: "Parts Cost" },
                       { key: "net_revenue", label: "Net Revenue" },
                       { key: "total_commission", label: "Commission" },
                       { key: "total_company_net", label: "Company Net" },
+                      { key: "review_amount", label: "Review" },
                       { key: "status", label: "Status" },
                     ] as { key: SortKey; label: string }[]
                   ).map(({ key, label }) => (
@@ -837,6 +842,10 @@ export function JobsTable() {
                             </span>
                           </div>
                         </TableCell>
+                        {/* Tip */}
+                        <TableCell className="tabular-nums font-medium text-foreground">
+                          {fmt(job.tip_amount ?? 0)}
+                        </TableCell>
                         {/* Parts Cost */}
                         <TableCell className="tabular-nums text-primary">
                           {fmt(job.parts_total_cost ?? 0)}
@@ -862,6 +871,10 @@ export function JobsTable() {
                           title="Company Net = Net Revenue - Commission"
                         >
                           {fmt(job.total_company_net ?? 0)}
+                        </TableCell>
+                        {/* Review */}
+                        <TableCell className="tabular-nums font-medium text-foreground">
+                          {fmt(job.review_amount ?? 0)}
                         </TableCell>
                         {/* Status */}
                         <TableCell>
