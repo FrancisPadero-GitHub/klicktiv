@@ -14,6 +14,7 @@ export interface DashboardTotals {
   partsCost: number;
   netRevenue: number;
   companyNet: number;
+  totalTechnicianCommissions: number;
   totalJobsCompleted: number;
   avgRevenuePerJob: number;
   companyNetMarginPct: number;
@@ -48,12 +49,15 @@ export interface MonthlyComparisonRow {
 export interface TechJobDetailJobRow {
   date: string;
   address: string;
+  deposits: number;
+  paymentStatus: "partial" | "full";
   parts: number;
   tip: number;
   gross: number;
   netAfterParts: number;
   techPay: number;
   companyNet: number;
+  reviewAmount: number;
   month: string;
 }
 
@@ -63,12 +67,14 @@ export interface TechJobDetailGroup {
   splitLabel: string;
   jobs: TechJobDetailJobRow[];
   totals: {
+    deposits: number;
     parts: number;
     tip: number;
     gross: number;
     netAfterParts: number;
     techPay: number;
     companyNet: number;
+    reviewAmount: number;
   };
 }
 
@@ -257,6 +263,7 @@ export function buildDashboardExportReport({
   let totalTips = d(0);
   let totalDeposits = d(0);
   let companyNet = d(0);
+  let totalTechnicianCommissions = d(0);
 
   const technicianAgg = new Map<string, TechPerformanceRow>();
   const techJobDetailMap = new Map<string, TechJobDetailGroup>();
@@ -324,6 +331,7 @@ export function buildDashboardExportReport({
       totalTips = totalTips.plus(d(tips));
       netRevenue = netRevenue.plus(net);
       companyNet = companyNet.plus(compNet);
+      totalTechnicianCommissions = totalTechnicianCommissions.plus(techPay);
     }
 
     if (job.payment_status === "partial") {
@@ -375,6 +383,7 @@ export function buildDashboardExportReport({
 
     // ── Per-job detail for Technician Job Detail export ───────────────────────
     const jobDate = safeDate(job.work_order_date);
+    const detailReviewAmount = job.review_amount ?? 0;
     const jobDetailRow: TechJobDetailJobRow = {
       date: jobDate
         ? jobDate.toLocaleDateString("en-PH", {
@@ -384,12 +393,15 @@ export function buildDashboardExportReport({
           })
         : "",
       address: job.address ?? "",
+      deposits,
+      paymentStatus: job.payment_status === "partial" ? "partial" : "full",
       parts: exportParts,
       tip: exportTips,
-      gross: exportGross,
+      gross: subtotal,
       netAfterParts: exportNet,
       techPay: exportTechPay,
       companyNet: exportCompanyNet,
+      reviewAmount: detailReviewAmount,
       month: jobDate
         ? `${MONTHS_SHORT[jobDate.getMonth()]} ${jobDate.getFullYear()}`
         : "",
@@ -400,21 +412,25 @@ export function buildDashboardExportReport({
       splitLabel: `${100 - commissionRate}% Co / ${commissionRate}% Tech`,
       jobs: [],
       totals: {
+        deposits: 0,
         parts: 0,
         tip: 0,
         gross: 0,
         netAfterParts: 0,
         techPay: 0,
         companyNet: 0,
+        reviewAmount: 0,
       },
     };
     existingDetail.jobs.push(jobDetailRow);
+    existingDetail.totals.deposits += deposits;
     existingDetail.totals.parts += exportParts;
     existingDetail.totals.tip += exportTips;
-    existingDetail.totals.gross += exportGross;
+    existingDetail.totals.gross += subtotal;
     existingDetail.totals.netAfterParts += exportNet;
     existingDetail.totals.techPay += exportTechPay;
     existingDetail.totals.companyNet += exportCompanyNet;
+    existingDetail.totals.reviewAmount += detailReviewAmount;
     existingDetail.splitLabel = `${100 - commissionRate}% Co / ${commissionRate}% Tech`;
     techJobDetailMap.set(techName, existingDetail);
 
@@ -596,6 +612,7 @@ export function buildDashboardExportReport({
       partsCost: parts,
       netRevenue: net,
       companyNet: totalCompanyNet,
+      totalTechnicianCommissions: dToNum(totalTechnicianCommissions),
       totalJobsCompleted: totalJobs,
       avgRevenuePerJob,
       companyNetMarginPct,
@@ -1127,8 +1144,8 @@ export async function exportDashboardReportAsExcel(
         fmt: FMT_PCT,
       },
       {
-        label: "Total Technician Tips",
-        value: report.totals.totalTips,
+        label: "Total Technician Commissions",
+        value: report.totals.totalTechnicianCommissions,
         fmt: FMT_CURRENCY,
       },
       {
@@ -1183,6 +1200,36 @@ export async function exportDashboardReportAsExcel(
     }
     r++;
   }
+
+  set(0, "Total Technician Tips", {
+    fill: { fgColor: { rgb: PALE_BLUE } },
+    font: {
+      italic: true,
+      color: { rgb: TEXT_MID },
+      sz: 9,
+      name: "Calibri",
+    },
+    alignment: { horizontal: "center", vertical: "bottom" },
+    border: { top: bdrThin(), left: bdrThin(BLUE), right: bdrThin(BLUE) },
+  });
+  span(0, 5);
+  set(
+    6,
+    report.totals.totalTips,
+    {
+      fill: { fgColor: { rgb: WHITE } },
+      font: { bold: true, color: { rgb: NAVY }, sz: 14, name: "Calibri" },
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        bottom: bdrMed(BLUE),
+        left: bdrThin(BLUE),
+        right: bdrThin(BLUE),
+      },
+    },
+    FMT_CURRENCY,
+  );
+  span(6, 8);
+  r++;
 
   r++; // spacer
 
@@ -1527,8 +1574,8 @@ export async function exportDashboardReportAsPdf(
       value: fmtPercent(report.totals.companyNetMarginPct),
     },
     {
-      label: "Total Technician Tips",
-      value: fmtCurrency(report.totals.totalTips),
+      label: "Total Technician Commissions",
+      value: fmtCurrency(report.totals.totalTechnicianCommissions),
     },
     {
       label: "Total Deposits",
@@ -1612,8 +1659,30 @@ export async function exportDashboardReportAsPdf(
     },
   });
 
+  const techTipsKpiY = (docX.lastAutoTable?.finalY ?? kpiY + 90) + 4;
+  tbl(doc, {
+    startY: techTipsKpiY,
+    margin: { left: MARGIN, right: MARGIN },
+    tableWidth: CWIDTH,
+    body: [["Total Technician Tips", fmtCurrency(report.totals.totalTips)]],
+    theme: "grid",
+    headStyles: {
+      fillColor: TEAL_COL,
+      textColor: WHITE,
+      fontStyle: "bold",
+      fontSize: 8,
+      halign: "left",
+    },
+    bodyStyles: { fontSize: 9, textColor: TEXT_DARK, cellPadding: 4 },
+    styles: { lineWidth: 0.3, lineColor: DIVIDER },
+    columnStyles: {
+      0: { cellWidth: CWIDTH * 0.67, halign: "left", fontStyle: "bold" },
+      1: { cellWidth: CWIDTH * 0.33, halign: "right", fontStyle: "bold" },
+    },
+  });
+
   // ── Technician section banner ─────────────────────────────────────────────
-  const techBannerY = (docX.lastAutoTable?.finalY ?? kpiY + 90) + 14;
+  const techBannerY = (docX.lastAutoTable?.finalY ?? kpiY + 90) + 12;
   banner(
     techBannerY,
     18,

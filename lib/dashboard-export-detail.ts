@@ -89,7 +89,7 @@ export function buildTechJobDetailSheet(
     font: { bold: true, color: { rgb: WHITE }, sz: 16, name: "Calibri" },
     alignment: { horizontal: "center", vertical: "center" },
   });
-  span(0, 8);
+  span(0, 11);
   r++;
 
   set(
@@ -101,7 +101,7 @@ export function buildTechJobDetailSheet(
       alignment: { horizontal: "center", vertical: "center" },
     },
   );
-  span(0, 8);
+  span(0, 11);
   r++;
   r++;
 
@@ -114,18 +114,21 @@ export function buildTechJobDetailSheet(
       alignment: { horizontal: "left", vertical: "center", indent: 1 },
       border: allBdr(NAVY),
     });
-    span(0, 8);
+    span(0, 11);
     r++;
 
     const colHeaders = [
       "Date",
       "Address",
-      "Parts",
+      "Gross/Subtotal",
+      "Deposits",
+      "Payment Status",
       "Tip",
-      "Gross",
+      "Parts Costs",
       "Net (After Parts)",
       `Tech Pay (${rate}%)`,
       `Company Net (${100 - rate}%)`,
+      "Review Amount",
       "Month",
     ];
     const colHdr = {
@@ -152,18 +155,21 @@ export function buildTechJobDetailSheet(
         ...base,
         alignment: { horizontal: "left", indent: 1 },
       });
-      set(2, job.parts, { ...num }, FMT_CURRENCY);
-      set(3, job.tip, { ...num }, FMT_CURRENCY);
-      set(4, job.gross, { ...num }, FMT_CURRENCY);
-      set(5, job.netAfterParts, { ...num }, FMT_CURRENCY);
-      set(6, job.techPay, { ...num }, FMT_CURRENCY);
+      set(2, job.gross, { ...num }, FMT_CURRENCY);
+      set(3, job.deposits, { ...num }, FMT_CURRENCY);
+      set(4, job.paymentStatus.toUpperCase(), ctr);
+      set(5, job.tip, { ...num }, FMT_CURRENCY);
+      set(6, job.parts, { ...num }, FMT_CURRENCY);
+      set(7, job.netAfterParts, { ...num }, FMT_CURRENCY);
+      set(8, job.techPay, { ...num }, FMT_CURRENCY);
       set(
-        7,
+        9,
         job.companyNet,
         { ...num, font: { ...base.font, bold: true, color: { rgb: GREEN } } },
         FMT_CURRENCY,
       );
-      set(8, job.month, ctr);
+      set(10, job.reviewAmount, { ...num }, FMT_CURRENCY);
+      set(11, job.month, ctr);
       r++;
     }
 
@@ -178,13 +184,16 @@ export function buildTechJobDetailSheet(
       alignment: { horizontal: "left", indent: 1 },
     });
     span(0, 1);
-    set(2, group.totals.parts, { ...tot }, FMT_CURRENCY);
-    set(3, group.totals.tip, { ...tot }, FMT_CURRENCY);
-    set(4, group.totals.gross, { ...tot }, FMT_CURRENCY);
-    set(5, group.totals.netAfterParts, { ...tot }, FMT_CURRENCY);
-    set(6, group.totals.techPay, { ...tot }, FMT_CURRENCY);
-    set(7, group.totals.companyNet, { ...tot }, FMT_CURRENCY);
-    set(8, `${group.jobs.length} jobs`, {
+    set(2, group.totals.gross, { ...tot }, FMT_CURRENCY);
+    set(3, group.totals.deposits, { ...tot }, FMT_CURRENCY);
+    set(4, "-", { ...tot, alignment: { horizontal: "center" } });
+    set(5, group.totals.tip, { ...tot }, FMT_CURRENCY);
+    set(6, group.totals.parts, { ...tot }, FMT_CURRENCY);
+    set(7, group.totals.netAfterParts, { ...tot }, FMT_CURRENCY);
+    set(8, group.totals.techPay, { ...tot }, FMT_CURRENCY);
+    set(9, group.totals.companyNet, { ...tot }, FMT_CURRENCY);
+    set(10, group.totals.reviewAmount, { ...tot }, FMT_CURRENCY);
+    set(11, `${group.jobs.length} jobs`, {
       ...tot,
       alignment: { horizontal: "center" },
     });
@@ -194,18 +203,21 @@ export function buildTechJobDetailSheet(
 
   ws["!ref"] = XS.utils.encode_range({
     s: { r: 0, c: 0 },
-    e: { r: r - 1, c: 8 },
+    e: { r: r - 1, c: 11 },
   });
   ws["!merges"] = merges;
   ws["!cols"] = [
     { wch: 13 },
-    { wch: 44 },
+    { wch: 34 },
+    { wch: 14 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 12 },
     { wch: 13 },
-    { wch: 13 },
-    { wch: 15 },
-    { wch: 18 },
-    { wch: 18 },
-    { wch: 18 },
+    { wch: 16 },
+    { wch: 16 },
+    { wch: 16 },
+    { wch: 14 },
     { wch: 12 },
   ];
   ws["!rows"] = [{ hpt: 38 }, { hpt: 20 }, { hpt: 6 }];
@@ -260,36 +272,45 @@ export function appendPdfTechJobDetailPages({
         [
           "Date",
           "Address",
-          "Parts",
+          "Gross/Subtotal",
+          "Deposits",
+          "Payment Status",
           "Tip",
-          "Gross",
+          "Parts Costs",
           "Net (After Parts)",
           `Tech Pay (${group.commissionRate}%)`,
           `Company Net (${100 - group.commissionRate}%)`,
+          "Review Amount",
           "Month",
         ],
       ],
       body: group.jobs.map((job) => [
         job.date,
         job.address,
-        fmtCurrency(job.parts),
-        fmtCurrency(job.tip),
         fmtCurrency(job.gross),
+        fmtCurrency(job.deposits),
+        job.paymentStatus.toUpperCase(),
+        fmtCurrency(job.tip),
+        fmtCurrency(job.parts),
         fmtCurrency(job.netAfterParts),
         fmtCurrency(job.techPay),
         fmtCurrency(job.companyNet),
+        fmtCurrency(job.reviewAmount),
         job.month,
       ]),
       foot: [
         [
           `TOTAL (${group.jobs.length} jobs)`,
           "",
-          fmtCurrency(group.totals.parts),
-          fmtCurrency(group.totals.tip),
           fmtCurrency(group.totals.gross),
+          fmtCurrency(group.totals.deposits),
+          "-",
+          fmtCurrency(group.totals.tip),
+          fmtCurrency(group.totals.parts),
           fmtCurrency(group.totals.netAfterParts),
           fmtCurrency(group.totals.techPay),
           fmtCurrency(group.totals.companyNet),
+          fmtCurrency(group.totals.reviewAmount),
           "",
         ],
       ],
@@ -315,18 +336,21 @@ export function appendPdfTechJobDetailPages({
       styles: { lineWidth: 0.3, lineColor: DIVIDER },
       columnStyles: {
         0: { halign: "center", cellWidth: 58 },
-        1: { halign: "left", cellWidth: 202 },
-        2: { halign: "right", cellWidth: 55 },
-        3: { halign: "right", cellWidth: 48 },
-        4: { halign: "right", cellWidth: 62 },
-        5: { halign: "right", cellWidth: 80 },
-        6: { halign: "right", cellWidth: 76 },
-        7: { halign: "right", cellWidth: 76 },
-        8: { halign: "center", cellWidth: 52 },
+        1: { halign: "left", cellWidth: 142 },
+        2: { halign: "right", cellWidth: 62 },
+        3: { halign: "right", cellWidth: 54 },
+        4: { halign: "center", cellWidth: 52 },
+        5: { halign: "right", cellWidth: 46 },
+        6: { halign: "right", cellWidth: 54 },
+        7: { halign: "right", cellWidth: 64 },
+        8: { halign: "right", cellWidth: 62 },
+        9: { halign: "right", cellWidth: 62 },
+        10: { halign: "right", cellWidth: 60 },
+        11: { halign: "center", cellWidth: 39 },
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       didParseCell: (data: any) => {
-        if (data.column.index === 7 && data.row.section === "body") {
+        if (data.column.index === 9 && data.row.section === "body") {
           data.cell.styles.textColor = GREEN_TXT;
           data.cell.styles.fontStyle = "bold";
         }
