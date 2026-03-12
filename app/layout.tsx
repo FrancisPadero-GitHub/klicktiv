@@ -5,6 +5,7 @@ import { QueryProvider } from "@/components/query-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import Script from "next/script";
 
 import { Toaster } from "@/components/ui/sonner";
 
@@ -35,13 +36,16 @@ export const metadata: Metadata = {
   authors: [{ name: "Klicktiv Team" }],
   creator: "Klicktiv",
   publisher: "Klicktiv",
+  alternates: {
+    canonical: "/",
+  },
   robots: {
     index: true,
     follow: true,
   },
   openGraph: {
     type: "website",
-    locale: "en_PH",
+    locale: "en_US",
     url: "https://klicktiv.io",
     title: "Klicktiv | Financial Orchestration for Field Service",
     description:
@@ -65,6 +69,14 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLdOrganization = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Klicktiv",
+  url: "https://klicktiv.io",
+  logo: "https://klicktiv.io/kt_logo_only.png",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -72,6 +84,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          id="jsonld-organization"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          // Structured data to help Google understand the brand entity.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrganization) }}
+        />
+      </head>
       <body className={`${dmSans.variable} antialiased`}>
         <Analytics />
         <QueryProvider>
