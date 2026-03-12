@@ -49,7 +49,7 @@ function FeedbackPage({ children }: FeedbackPageProps) {
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);
+  // const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { submitFeedback, loading } = useSubmitFeedback({
@@ -62,7 +62,7 @@ function FeedbackPage({ children }: FeedbackPageProps) {
   const resetFile = () => {
     setPreview(null);
     setFileError(null);
-    setFileName(null);
+    // setFileName(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -70,7 +70,7 @@ function FeedbackPage({ children }: FeedbackPageProps) {
     const file = e.target.files?.[0];
     setPreview(null);
     setFileError(null);
-    setFileName(null);
+    // setFileName(null);
 
     if (!file) return;
 
@@ -90,7 +90,7 @@ function FeedbackPage({ children }: FeedbackPageProps) {
       return;
     }
 
-    setFileName(file.name);
+    // setFileName(file.name);
     const objectUrl = URL.createObjectURL(file);
     setPreview(objectUrl);
   };
