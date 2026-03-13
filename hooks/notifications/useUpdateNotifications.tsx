@@ -58,7 +58,7 @@ export function useUpdateNotifications() {
   const mutation = useMutation({
     mutationFn: updateNotification,
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey, exact: false });
     },
   });
 

@@ -1,4 +1,5 @@
 import { ModeToggle } from "@/components/mode-toggle";
+import SidebarNotification from "@/components/dashboard/notifications/sidebar-notifcation";
 import { useSidebarStore } from "@/features/store/dashboard/useSidebarStore";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
@@ -43,7 +44,12 @@ function Topbar() {
           )}
         </button>
       </h1>
-      <ModeToggle />
+
+      {/* Right controls */}
+      <div className="flex items-center gap-1">
+        <SidebarNotification />
+        <ModeToggle />
+      </div>
     </header>
   );
 }

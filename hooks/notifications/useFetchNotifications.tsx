@@ -9,13 +9,11 @@ export type NotificationsRow =
 
 export const fetchNotifications = async (
   companyId: string,
-  userId: string,
 ): Promise<NotificationsRow[]> => {
   const { data, error } = await supabase
     .from("notifications")
     .select("*")
     .eq("company_id", companyId)
-    .eq("user_id", userId)
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
@@ -27,37 +25,37 @@ export const fetchNotifications = async (
 export function useFetchNotifications() {
   const { session } = useAuth();
   const companyId = session?.user.app_metadata.company_id as string | undefined;
-  const userId = session?.user.id;
+
   const queryClient = useQueryClient();
   const queryKey = useMemo(
-    () => ["notifications", companyId ?? null, userId ?? null] as const,
-    [companyId, userId],
+    () => ["notifications", companyId ?? null] as const,
+    [companyId],
   );
 
   const query = useQuery<NotificationsRow[], Error>({
     queryKey,
     queryFn: () => {
-      if (!companyId || !userId) {
+      if (!companyId) {
         throw new Error("Company ID or user ID is missing from user session");
       }
 
-      return fetchNotifications(companyId, userId);
+      return fetchNotifications(companyId);
     },
-    enabled: Boolean(companyId && userId),
+    enabled: Boolean(companyId),
   });
 
   useEffect(() => {
-    if (!companyId || !userId) return;
+    if (!companyId) return;
 
     const channel = supabase
-      .channel(`notifications:${userId}`)
+      .channel(`notifications:${companyId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "notifications",
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${companyId}`,
         },
         () => {
           void queryClient.invalidateQueries({ queryKey });
@@ -70,7 +68,7 @@ export function useFetchNotifications() {
         console.error("Error removing channel:", err);
       });
     };
-  }, [companyId, userId, queryClient, queryKey]);
+  }, [companyId, queryClient, queryKey]);
 
   return query;
 }
