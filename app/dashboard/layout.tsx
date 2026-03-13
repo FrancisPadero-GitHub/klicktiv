@@ -65,7 +65,7 @@ export default function DashboardLayout({
           <Loading />
         </div>
       ) : !isAdmin && isRestrictedRoute ? null : (
-        <div className="fixed inset-0 flex overflow-hidden bg-background">
+        <div className="fixed inset-0 flex bg-background">
           {/* Desktop Sidebar */}
           <aside
             className={cn(
