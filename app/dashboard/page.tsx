@@ -2,8 +2,9 @@
 
 import { DashboardDateFilter } from "@/components/dashboard/dashboard-date-filter";
 import { DashboardKPIs } from "@/components/dashboard/dashboard-kpis";
-import { RecentJobsTable } from "@/components/dashboard/jobs/recent-jobs-table";
+import { RecentJobsList } from "@/components/dashboard/jobs/recent-jobs-list";
 import { DashboardExportButton } from "@/components/dashboard/dashboard-export-button";
+import { FinancialTrendsSection } from "@/components/dashboard/financial/financial-trends-section";
 import { useAuth } from "@/components/auth-provider";
 
 export default function DashboardPage() {
@@ -37,7 +38,8 @@ export default function DashboardPage() {
       {/* Content, loading / error / data */}
       <div className="space-y-4">
         <DashboardKPIs companyId={company_id ?? ""} />
-        <RecentJobsTable />
+        <FinancialTrendsSection companyId={company_id ?? ""} />
+        <RecentJobsList />
       </div>
     </div>
   );

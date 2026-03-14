@@ -64,7 +64,7 @@ const getCurrentISOWeek = (): string => {
 const now = new Date();
 
 const initialState: DashboardDateFilter = {
-  mode: "month",
+  mode: "year",
   year: now.getFullYear(),
   month: now.getMonth() + 1,
   isoWeek: getCurrentISOWeek(),
