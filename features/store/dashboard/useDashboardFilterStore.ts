@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 export type DateFilterMode =
   | "all"
@@ -76,28 +75,23 @@ const initialState: DashboardDateFilter = {
 };
 
 export const useDashboardFilterStore = create<DashboardFilterState>()(
-  persist(
-    (set) => ({
-      ...initialState,
+  (set) => ({
+    ...initialState,
 
-      setMode: (mode) => set({ mode }),
-      setYear: (year) => set({ year }),
-      setMonth: (month) => set({ month }),
-      setIsoWeek: (isoWeek) => set({ isoWeek }),
-      setDate: (date) => set({ date }),
-      setStartDate: (startDate) => set({ startDate }),
-      setEndDate: (endDate) => set({ endDate }),
-      setTechnicianId: (technicianId) => set({ technicianId }),
+    setMode: (mode) => set({ mode }),
+    setYear: (year) => set({ year }),
+    setMonth: (month) => set({ month }),
+    setIsoWeek: (isoWeek) => set({ isoWeek }),
+    setDate: (date) => set({ date }),
+    setStartDate: (startDate) => set({ startDate }),
+    setEndDate: (endDate) => set({ endDate }),
+    setTechnicianId: (technicianId) => set({ technicianId }),
 
-      setPreset: (mode, overrides) =>
-        set((state) => ({ ...state, mode, ...overrides })),
+    setPreset: (mode, overrides) =>
+      set((state) => ({ ...state, mode, ...overrides })),
 
-      reset: () => set(initialState),
-    }),
-    {
-      name: "dashboard-date-filter",
-    },
-  ),
+    reset: () => set(initialState),
+  }),
 );
 
 /**
