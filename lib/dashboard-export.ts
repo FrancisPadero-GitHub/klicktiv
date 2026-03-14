@@ -1,11 +1,8 @@
 import { saveAs } from "file-saver";
-import { d, dSub, dToNum } from "@/lib/decimal";
 import {
   appendPdfTechJobDetailPages,
   buildTechJobDetailSheet,
 } from "@/lib/dashboard-export-detail";
-import type { VJobsRow } from "@/hooks/jobs/useFetchJobs";
-import type { TechnicianDetailRow } from "@/hooks/technicians/useFetchTechnicians";
 
 export type ExportFormat = "pdf" | "excel";
 
@@ -107,6 +104,15 @@ export interface ReviewMonthlyRow {
   pctOfDoneJobs: number;
 }
 
+/** Extra KPIs from the `dashboard_metrics` RPC (optional). */
+export interface MetricsKpis {
+  estimatePipeline: number;
+  techCommissionMarginPct: number;
+  reviewRecordsTotal: number;
+  totalJobsDone: number;
+  totalJobsPending: number;
+}
+
 export interface DashboardExportReport {
   title: string;
   company: {
@@ -117,6 +123,7 @@ export interface DashboardExportReport {
   reportingPeriod: string;
   generatedAt: string;
   totals: DashboardTotals;
+  metricsKpis?: MetricsKpis;
   technicianRows: TechPerformanceRow[];
   monthlyRows: MonthlyComparisonRow[];
   techJobDetailGroups: TechJobDetailGroup[];
@@ -127,47 +134,6 @@ export interface DashboardExportReport {
   reviewMonthlyRows: ReviewMonthlyRow[];
 }
 
-interface BuildReportInput {
-  jobs: VJobsRow[];
-  technicians: TechnicianDetailRow[];
-  techNameMap?: Map<string, string>;
-  scopeLabel: string;
-  company: {
-    id: string;
-    name?: string | null;
-  };
-}
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const MONTHS_SHORT = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
 const fmtCurrency = (value: number) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -175,45 +141,6 @@ const fmtCurrency = (value: number) =>
   }).format(value);
 
 const fmtPercent = (value: number, dp = 1) => `${value.toFixed(dp)}%`;
-
-const hasText = (value: string | null | undefined): value is string =>
-  typeof value === "string" && value.trim().length > 0;
-
-const toLabel = (value: string | null | undefined, fallback: string) =>
-  hasText(value) ? value.trim() : fallback;
-
-const safeDate = (isoDate: string | null | undefined) => {
-  if (!isoDate) return null;
-
-  const raw = isoDate.trim();
-  if (!raw) return null;
-
-  // Handle YYYY-MM-DD and timestamp-like values from Supabase consistently.
-  const normalized = raw.includes("T")
-    ? raw
-    : raw.includes(" ")
-      ? raw.replace(" ", "T")
-      : `${raw}T00:00:00`;
-
-  const parsed = new Date(normalized);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const formatPeriod = (dates: Date[]) => {
-  if (dates.length === 0) return "No completed jobs in selected period";
-
-  const min = new Date(Math.min(...dates.map((dte) => dte.getTime())));
-  const max = new Date(Math.max(...dates.map((dte) => dte.getTime())));
-
-  const format = (value: Date) =>
-    value.toLocaleDateString("en-PH", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-
-  return `${format(min)} - ${format(max)}`;
-};
 
 const slugify = (value: string) =>
   value
@@ -235,412 +162,61 @@ const makeFileName = (
   }`;
 };
 
-export function buildDashboardExportReport({
-  jobs,
-  technicians,
-  techNameMap,
-  scopeLabel,
-  company,
-}: BuildReportInput): DashboardExportReport {
-  const companyName = company.name?.trim() || "Unknown Company";
+/**
+ * Map the pre-computed data returned by `useDashboardExport` (RPC) directly
+ * into the `DashboardExportReport` shape consumed by the Excel / PDF builders.
+ *
+ * This avoids re-aggregating raw jobs on the client – the server already did it.
+ */
+export function mapHookDataToReport(
+  hookData: {
+    totals: DashboardTotals;
+    monthlyRows: MonthlyComparisonRow[];
+    technicianRows: TechPerformanceRow[];
+    techJobDetailGroups: TechJobDetailGroup[];
+    reviewTotals: ReviewTotals;
+    reviewTypeRows: ReviewBreakdownRow[];
+    paymentMethodRows: ReviewBreakdownRow[];
+    reviewTechnicianRows: ReviewBreakdownRow[];
+    reviewMonthlyRows: ReviewMonthlyRow[];
+  },
+  opts: {
+    scopeLabel: string;
+    company: { id: string; name?: string | null };
+    metricsKpis?: MetricsKpis;
+  },
+): DashboardExportReport {
+  const companyName = opts.company.name?.trim() || "Unknown Company";
 
-  const doneJobs = jobs.filter((job) => job.status === "done");
-
-  const commissionMap = new Map<string, number>();
-  const fallbackTechNameMap = new Map<string, string>();
-  for (const technician of technicians) {
-    commissionMap.set(technician.id, technician.commission);
-    fallbackTechNameMap.set(technician.id, technician.name);
+  // Derive reportingPeriod from the first / last monthlyRow or from job dates
+  let reportingPeriod = "N/A";
+  if (hookData.monthlyRows.length > 0) {
+    const months = hookData.monthlyRows.map((r) => r.month);
+    reportingPeriod =
+      months.length === 1
+        ? months[0]
+        : `${months[0]} - ${months[months.length - 1]}`;
   }
-
-  const periodDates = doneJobs
-    .map((job) => safeDate(job.work_order_date))
-    .filter((value): value is Date => value !== null);
-
-  let grossRevenue = d(0);
-  let netRevenue = d(0);
-  let partsCost = d(0);
-  let totalTips = d(0);
-  let totalDeposits = d(0);
-  let companyNet = d(0);
-  let totalTechnicianCommissions = d(0);
-
-  const technicianAgg = new Map<string, TechPerformanceRow>();
-  const techJobDetailMap = new Map<string, TechJobDetailGroup>();
-  const monthlyAgg = new Map<
-    string,
-    {
-      month: string;
-      jobs: number;
-      gross: number;
-      parts: number;
-      net: number;
-      techPay: number;
-      companyNet: number;
-    }
-  >();
-  const paymentMethodAgg = new Map<
-    string,
-    {
-      label: string;
-      reviews: number;
-      totalAmount: number;
-    }
-  >();
-  const reviewTechnicianAgg = new Map<
-    string,
-    {
-      label: string;
-      reviews: number;
-      totalAmount: number;
-    }
-  >();
-  const reviewTypeAgg = new Map<
-    string,
-    {
-      label: string;
-      reviews: number;
-      totalAmount: number;
-    }
-  >();
-  const reviewMonthAgg = new Map<
-    string,
-    {
-      month: string;
-      reviews: number;
-      totalAmount: number;
-    }
-  >();
-
-  let totalReviewAmount = d(0);
-  let totalJobsWithReviews = 0;
-
-  for (const job of doneJobs) {
-    const subtotal = job.subtotal ?? 0;
-    const parts = job.parts_total_cost ?? 0;
-    const tips = job.tip_amount ?? 0;
-    const deposits = job.deposits ?? 0;
-    const net = dSub(subtotal, parts);
-    const commissionRate = commissionMap.get(job.technician_id ?? "") ?? 0;
-    const techPay = net.times(d(commissionRate).dividedBy(100));
-    const compNet = net.minus(techPay);
-
-    if (job.payment_status === "full") {
-      grossRevenue = grossRevenue.plus(d(subtotal));
-      partsCost = partsCost.plus(d(parts));
-      totalTips = totalTips.plus(d(tips));
-      netRevenue = netRevenue.plus(net);
-      companyNet = companyNet.plus(compNet);
-      totalTechnicianCommissions = totalTechnicianCommissions.plus(techPay);
-    }
-
-    if (job.payment_status === "partial") {
-      totalDeposits = totalDeposits.plus(d(deposits));
-      grossRevenue = grossRevenue.plus(d(deposits));
-    }
-
-    const exportGross =
-      job.payment_status === "full"
-        ? subtotal
-        : job.payment_status === "partial"
-          ? deposits
-          : 0;
-    const exportParts = job.payment_status === "full" ? parts : 0;
-    const exportTips = job.payment_status === "full" ? tips : 0;
-    const exportNet = job.payment_status === "full" ? dToNum(net) : 0;
-    const exportTechPay = job.payment_status === "full" ? dToNum(techPay) : 0;
-    const exportCompanyNet =
-      job.payment_status === "full" ? dToNum(compNet) : 0;
-
-    const techName = job.technician_id
-      ? (techNameMap?.get(job.technician_id) ??
-        fallbackTechNameMap.get(job.technician_id) ??
-        "Unassigned")
-      : "Unassigned";
-
-    const existingTech = technicianAgg.get(techName) ?? {
-      technician: techName,
-      jobs: 0,
-      grossRevenue: 0,
-      parts: 0,
-      tips: 0,
-      netRevenue: 0,
-      techPay: 0,
-      companyNet: 0,
-      splitLabel: `${100 - commissionRate}% Co / ${commissionRate}% Tech`,
-    };
-
-    existingTech.jobs += 1;
-    existingTech.grossRevenue += exportGross;
-    existingTech.parts += exportParts;
-    existingTech.tips += exportTips;
-    existingTech.netRevenue += exportNet;
-    existingTech.techPay += exportTechPay;
-    existingTech.companyNet += exportCompanyNet;
-    existingTech.splitLabel = `${100 - commissionRate}% Co / ${commissionRate}% Tech`;
-
-    technicianAgg.set(techName, existingTech);
-
-    // ── Per-job detail for Technician Job Detail export ───────────────────────
-    const jobDate = safeDate(job.work_order_date);
-    const detailReviewAmount = job.review_amount ?? 0;
-    const jobDetailRow: TechJobDetailJobRow = {
-      date: jobDate
-        ? jobDate.toLocaleDateString("en-PH", {
-            month: "2-digit",
-            day: "2-digit",
-            year: "numeric",
-          })
-        : "",
-      address: job.address ?? "",
-      deposits,
-      paymentStatus: job.payment_status === "partial" ? "partial" : "full",
-      parts: exportParts,
-      tip: exportTips,
-      gross: subtotal,
-      netAfterParts: exportNet,
-      techPay: exportTechPay,
-      companyNet: exportCompanyNet,
-      reviewAmount: detailReviewAmount,
-      month: jobDate
-        ? `${MONTHS_SHORT[jobDate.getMonth()]} ${jobDate.getFullYear()}`
-        : "",
-    };
-    const existingDetail = techJobDetailMap.get(techName) ?? {
-      technician: techName,
-      commissionRate,
-      splitLabel: `${100 - commissionRate}% Co / ${commissionRate}% Tech`,
-      jobs: [],
-      totals: {
-        deposits: 0,
-        parts: 0,
-        tip: 0,
-        gross: 0,
-        netAfterParts: 0,
-        techPay: 0,
-        companyNet: 0,
-        reviewAmount: 0,
-      },
-    };
-    existingDetail.jobs.push(jobDetailRow);
-    existingDetail.totals.deposits += deposits;
-    existingDetail.totals.parts += exportParts;
-    existingDetail.totals.tip += exportTips;
-    existingDetail.totals.gross += subtotal;
-    existingDetail.totals.netAfterParts += exportNet;
-    existingDetail.totals.techPay += exportTechPay;
-    existingDetail.totals.companyNet += exportCompanyNet;
-    existingDetail.totals.reviewAmount += detailReviewAmount;
-    existingDetail.splitLabel = `${100 - commissionRate}% Co / ${commissionRate}% Tech`;
-    techJobDetailMap.set(techName, existingDetail);
-
-    if (job.work_order_date) {
-      const dte = safeDate(job.work_order_date);
-      if (dte) {
-        const key = `${dte.getFullYear()}-${String(dte.getMonth() + 1).padStart(2, "0")}`;
-        const monthLabel = `${MONTHS[dte.getMonth()]} ${dte.getFullYear()}`;
-        const existingMonth = monthlyAgg.get(key) ?? {
-          month: monthLabel,
-          jobs: 0,
-          gross: 0,
-          parts: 0,
-          net: 0,
-          techPay: 0,
-          companyNet: 0,
-        };
-
-        existingMonth.jobs += 1;
-        existingMonth.gross += exportGross;
-        existingMonth.parts += exportParts;
-        existingMonth.net += exportNet;
-        existingMonth.techPay += exportTechPay;
-        existingMonth.companyNet += exportCompanyNet;
-
-        monthlyAgg.set(key, existingMonth);
-      }
-    }
-
-    if (!job.review_amount) {
-      continue;
-    }
-
-    const reviewAmount = job.review_amount;
-    totalReviewAmount = totalReviewAmount.plus(d(reviewAmount));
-    totalJobsWithReviews += 1;
-
-    const reviewType = toLabel(job.review_type, "Unspecified Type");
-    const method = toLabel(job.payment_method, "Unspecified Method");
-
-    const existingType = reviewTypeAgg.get(reviewType) ?? {
-      label: reviewType,
-      reviews: 0,
-      totalAmount: 0,
-    };
-    existingType.reviews += 1;
-    existingType.totalAmount += reviewAmount;
-    reviewTypeAgg.set(reviewType, existingType);
-
-    const existingMethod = paymentMethodAgg.get(method) ?? {
-      label: method,
-      reviews: 0,
-      totalAmount: 0,
-    };
-    existingMethod.reviews += 1;
-    existingMethod.totalAmount += reviewAmount;
-    paymentMethodAgg.set(method, existingMethod);
-
-    const existingTechnicianReview = reviewTechnicianAgg.get(techName) ?? {
-      label: techName,
-      reviews: 0,
-      totalAmount: 0,
-    };
-    existingTechnicianReview.reviews += 1;
-    existingTechnicianReview.totalAmount += reviewAmount;
-    reviewTechnicianAgg.set(techName, existingTechnicianReview);
-
-    const reviewDate = safeDate(job.review_date ?? job.work_order_date);
-    if (reviewDate) {
-      const key = `${reviewDate.getFullYear()}-${String(
-        reviewDate.getMonth() + 1,
-      ).padStart(2, "0")}`;
-      const monthLabel = `${MONTHS[reviewDate.getMonth()]} ${reviewDate.getFullYear()}`;
-      const existing = reviewMonthAgg.get(key) ?? {
-        month: monthLabel,
-        reviews: 0,
-        totalAmount: 0,
-      };
-      existing.reviews += 1;
-      existing.totalAmount += reviewAmount;
-      reviewMonthAgg.set(key, existing);
-    }
-  }
-
-  const gross = dToNum(grossRevenue);
-  const parts = dToNum(partsCost);
-  const net = dToNum(netRevenue);
-  const totalCompanyNet = dToNum(companyNet);
-  const totalJobs = doneJobs.length;
-  const avgRevenuePerJob =
-    totalJobs > 0 ? dToNum(grossRevenue.dividedBy(totalJobs)) : 0;
-  const companyNetMarginPct =
-    net > 0 ? dToNum(companyNet.dividedBy(netRevenue).times(100), 1) : 0;
-
-  const technicianRows = Array.from(technicianAgg.values()).sort(
-    (a, b) => b.grossRevenue - a.grossRevenue,
-  );
-
-  const monthlyRows = Array.from(monthlyAgg.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, value]) => ({
-      ...value,
-      pctOfTotal: gross > 0 ? (value.gross / gross) * 100 : 0,
-      companyNetPct:
-        value.gross > 0 ? (value.companyNet / value.gross) * 100 : 0,
-    }));
-
-  const techJobDetailGroups = Array.from(techJobDetailMap.values())
-    .sort((a, b) => b.totals.gross - a.totals.gross)
-    .map((group) => ({
-      ...group,
-      jobs: group.jobs.sort((a, b) => a.date.localeCompare(b.date)),
-    }));
-
-  const totalReviewAmountNum = dToNum(totalReviewAmount);
-  const totalJobsWithoutReviews = Math.max(totalJobs - totalJobsWithReviews, 0);
-  const reviewCapturePct =
-    totalJobs > 0 ? (totalJobsWithReviews / totalJobs) * 100 : 0;
-
-  const toBreakdownRows = (
-    source: Map<
-      string,
-      { label: string; reviews: number; totalAmount: number }
-    >,
-  ): ReviewBreakdownRow[] =>
-    Array.from(source.values())
-      .sort((a, b) => {
-        if (b.totalAmount !== a.totalAmount) {
-          return b.totalAmount - a.totalAmount;
-        }
-        return b.reviews - a.reviews;
-      })
-      .map((row) => ({
-        label: row.label,
-        reviews: row.reviews,
-        totalAmount: row.totalAmount,
-        avgAmount: row.reviews > 0 ? row.totalAmount / row.reviews : 0,
-        pctOfReviews:
-          totalJobsWithReviews > 0
-            ? (row.reviews / totalJobsWithReviews) * 100
-            : 0,
-        pctOfAmount:
-          totalReviewAmountNum > 0
-            ? (row.totalAmount / totalReviewAmountNum) * 100
-            : 0,
-      }));
-
-  const reviewTypeRows = toBreakdownRows(reviewTypeAgg);
-  const paymentMethodRows = toBreakdownRows(paymentMethodAgg);
-  const reviewTechnicianRows = toBreakdownRows(reviewTechnicianAgg);
-
-  const reviewMonthlyRows: ReviewMonthlyRow[] = Array.from(
-    reviewMonthAgg.entries(),
-  )
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, row]) => {
-      const doneJobsInMonth = monthlyAgg.get(key)?.jobs ?? 0;
-      return {
-        month: row.month,
-        reviews: row.reviews,
-        totalAmount: row.totalAmount,
-        avgAmount: row.reviews > 0 ? row.totalAmount / row.reviews : 0,
-        pctOfDoneJobs:
-          doneJobsInMonth > 0 ? (row.reviews / doneJobsInMonth) * 100 : 0,
-      };
-    });
 
   return {
     title: `${companyName.toUpperCase()} - KLICKTIV FINANCIAL REPORT`,
     company: {
-      id: company.id,
+      id: opts.company.id,
       name: companyName,
     },
-    scopeLabel,
-    reportingPeriod: formatPeriod(periodDates),
+    scopeLabel: opts.scopeLabel,
+    reportingPeriod,
     generatedAt: new Date().toLocaleString("en-US"),
-    totals: {
-      grossRevenue: gross,
-      partsCost: parts,
-      netRevenue: net,
-      companyNet: totalCompanyNet,
-      totalTechnicianCommissions: dToNum(totalTechnicianCommissions),
-      totalJobsCompleted: totalJobs,
-      avgRevenuePerJob,
-      companyNetMarginPct,
-      totalTips: dToNum(totalTips),
-      totalDeposits: dToNum(totalDeposits),
-    },
-    technicianRows,
-    monthlyRows,
-    techJobDetailGroups,
-    reviewTotals: {
-      totalDoneJobs: totalJobs,
-      totalJobsWithReviews,
-      totalJobsWithoutReviews,
-      reviewCapturePct,
-      totalReviewAmount: totalReviewAmountNum,
-      avgReviewAmount:
-        totalJobsWithReviews > 0
-          ? totalReviewAmountNum / totalJobsWithReviews
-          : 0,
-      avgReviewAmountPerDoneJob:
-        totalJobs > 0 ? totalReviewAmountNum / totalJobs : 0,
-      distinctPaymentMethods: paymentMethodAgg.size,
-      distinctReviewTypes: reviewTypeAgg.size,
-    },
-    reviewTypeRows,
-    paymentMethodRows,
-    reviewTechnicianRows,
-    reviewMonthlyRows,
+    totals: hookData.totals,
+    metricsKpis: opts.metricsKpis,
+    technicianRows: hookData.technicianRows,
+    monthlyRows: hookData.monthlyRows,
+    techJobDetailGroups: hookData.techJobDetailGroups,
+    reviewTotals: hookData.reviewTotals,
+    reviewTypeRows: hookData.reviewTypeRows,
+    paymentMethodRows: hookData.paymentMethodRows,
+    reviewTechnicianRows: hookData.reviewTechnicianRows,
+    reviewMonthlyRows: hookData.reviewMonthlyRows,
   };
 }
 
@@ -1051,10 +627,24 @@ export async function exportDashboardReportAsExcel(
 
   const enc = (row: number, col: number) =>
     XS.utils.encode_cell({ r: row, c: col }) as string;
-  const set = (col: number, v: string | number, s: object = {}, z?: string) => {
+
+  const set = (col: number, v: string | number | null | undefined, s: object = {}, z?: string) => {
+    // Handle invalid values to prevent Excel corruption
+    let val = v;
+    let type: "n" | "s" = "s";
+
+    if (v === null || v === undefined) {
+      val = "";
+    } else if (typeof v === "number") {
+      if (isNaN(v) || !isFinite(v)) {
+        val = 0;
+      }
+      type = "n";
+    }
+
     const cell: Record<string, unknown> = {
-      v,
-      t: typeof v === "number" ? "n" : "s",
+      v: val,
+      t: type,
       s,
     };
     if (z) cell.z = z;
@@ -1102,8 +692,14 @@ export async function exportDashboardReportAsExcel(
   r++;
 
   // ── KPI cards - 3 cards per row, label row + value row ────────────────────
+  const mk = report.metricsKpis;
   const kpiRows: Array<Array<{ label: string; value: number; fmt: string }>> = [
     [
+      {
+        label: "Estimate Pipeline",
+        value: mk?.estimatePipeline ?? 0,
+        fmt: FMT_CURRENCY,
+      },
       {
         label: "Total Gross Revenue",
         value: report.totals.grossRevenue,
@@ -1114,9 +710,38 @@ export async function exportDashboardReportAsExcel(
         value: report.totals.partsCost,
         fmt: FMT_CURRENCY,
       },
+    ],
+    [
       {
         label: "Total Net Revenue (After Parts)",
         value: report.totals.netRevenue,
+        fmt: FMT_CURRENCY,
+      },
+      {
+        label: "Avg Revenue Per Job",
+        value: report.totals.avgRevenuePerJob,
+        fmt: FMT_CURRENCY,
+      },
+      {
+        label: "Total Deposits",
+        value: report.totals.totalDeposits,
+        fmt: FMT_CURRENCY,
+      },
+    ],
+    [
+      {
+        label: "Total Technician Commissions",
+        value: report.totals.totalTechnicianCommissions,
+        fmt: FMT_CURRENCY,
+      },
+      {
+        label: "Tech Commission Margin",
+        value: (mk?.techCommissionMarginPct ?? 0) / 100,
+        fmt: FMT_PCT,
+      },
+      {
+        label: "Total Technician Tips",
+        value: report.totals.totalTips,
         fmt: FMT_CURRENCY,
       },
     ],
@@ -1127,31 +752,31 @@ export async function exportDashboardReportAsExcel(
         fmt: FMT_CURRENCY,
       },
       {
-        label: "Total Technician Tips",
-        value: report.totals.totalTips,
-        fmt: FMT_CURRENCY,
-      },
-      {
-        label: "Avg Revenue Per Job",
-        value: report.totals.avgRevenuePerJob,
-        fmt: FMT_CURRENCY,
-      },
-    ],
-    [
-      {
         label: "Company Net Margin",
         value: report.totals.companyNetMarginPct / 100,
         fmt: FMT_PCT,
       },
       {
-        label: "Total Technician Commissions",
-        value: report.totals.totalTechnicianCommissions,
+        label: "Reviews Total",
+        value: mk?.reviewRecordsTotal ?? report.reviewTotals.totalReviewAmount,
         fmt: FMT_CURRENCY,
       },
+    ],
+    [
       {
-        label: "Total Deposits",
-        value: report.totals.totalDeposits,
-        fmt: FMT_CURRENCY,
+        label: "Total Jobs Done",
+        value: mk?.totalJobsDone ?? report.totals.totalJobsCompleted,
+        fmt: FMT_INT,
+      },
+      {
+        label: "Total Jobs Pending",
+        value: mk?.totalJobsPending ?? 0,
+        fmt: FMT_INT,
+      },
+      {
+        label: "Review Coverage",
+        value: report.reviewTotals.reviewCapturePct / 100,
+        fmt: FMT_PCT,
       },
     ],
   ];
@@ -1249,19 +874,19 @@ export async function exportDashboardReportAsExcel(
       ...base,
       alignment: { horizontal: "left", indent: 1 },
     });
-    set(1, tech.jobs, { ...num }, FMT_INT);
-    set(2, tech.grossRevenue, { ...num }, FMT_CURRENCY);
-    set(3, tech.parts, { ...num }, FMT_CURRENCY);
-    set(4, tech.tips, { ...num }, FMT_CURRENCY);
-    set(5, tech.netRevenue, { ...num }, FMT_CURRENCY);
-    set(6, tech.techPay, { ...num }, FMT_CURRENCY);
+    set(1, tech.jobs || 0, { ...num }, FMT_INT);
+    set(2, tech.grossRevenue || 0, { ...num }, FMT_CURRENCY);
+    set(3, tech.parts || 0, { ...num }, FMT_CURRENCY);
+    set(4, tech.tips || 0, { ...num }, FMT_CURRENCY);
+    set(5, tech.netRevenue || 0, { ...num }, FMT_CURRENCY);
+    set(6, tech.techPay || 0, { ...num }, FMT_CURRENCY);
     set(
       7,
-      tech.companyNet,
+      tech.companyNet || 0,
       { ...num, font: { ...base.font, bold: true, color: { rgb: GREEN } } },
       FMT_CURRENCY,
     );
-    set(8, tech.splitLabel, { ...ctr });
+    set(8, tech.splitLabel || "", { ...ctr });
     r++;
   }
 
@@ -1350,19 +975,19 @@ export async function exportDashboardReportAsExcel(
       font: { ...base.font, bold: true },
       alignment: { horizontal: "left", indent: 1 },
     });
-    set(1, m.jobs, { ...num }, FMT_INT);
-    set(2, m.gross, { ...num }, FMT_CURRENCY);
-    set(3, m.parts, { ...num }, FMT_CURRENCY);
-    set(4, m.net, { ...num }, FMT_CURRENCY);
-    set(5, m.techPay, { ...num }, FMT_CURRENCY);
+    set(1, m.jobs || 0, { ...num }, FMT_INT);
+    set(2, m.gross || 0, { ...num }, FMT_CURRENCY);
+    set(3, m.parts || 0, { ...num }, FMT_CURRENCY);
+    set(4, m.net || 0, { ...num }, FMT_CURRENCY);
+    set(5, m.techPay || 0, { ...num }, FMT_CURRENCY);
     set(
       6,
-      m.companyNet,
+      m.companyNet || 0,
       { ...num, font: { ...base.font, bold: true, color: { rgb: GREEN } } },
       FMT_CURRENCY,
     );
-    set(7, m.pctOfTotal / 100, { ...num }, FMT_PCT);
-    set(8, m.companyNetPct / 100, { ...num }, FMT_PCT);
+    set(7, (m.pctOfTotal || 0) / 100, { ...num }, FMT_PCT);
+    set(8, (m.companyNetPct || 0) / 100, { ...num }, FMT_PCT);
     r++;
   }
 
@@ -1414,9 +1039,14 @@ export async function exportDashboardReportAsExcel(
   const reviewWs = buildReviewTotalsSheet(report, XS);
   XS.utils.book_append_sheet(wb, reviewWs, "Review Totals");
 
-  const output = XS.write(wb, { bookType: "xlsx", type: "array" });
+  const output = XS.write(wb, { bookType: "xlsx", type: "binary" });
+
+  // Convert binary string to a Uint8Array for Blob
+  const buf = new Uint8Array(output.length);
+  for (let i = 0; i < output.length; ++i) buf[i] = output.charCodeAt(i) & 0xff;
+
   saveAs(
-    new Blob([output], {
+    new Blob([buf], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
     makeFileName("excel", report.scopeLabel, report.company.name),
@@ -1513,7 +1143,12 @@ export async function exportDashboardReportAsPdf(
   });
 
   // ── KPI grid (3 columns of label+value pairs) ─────────────────────────────
+  const mk = report.metricsKpis;
   const kpiItems = [
+    {
+      label: "Estimate Pipeline",
+      value: fmtCurrency(mk?.estimatePipeline ?? 0),
+    },
     {
       label: "Total Gross Revenue",
       value: fmtCurrency(report.totals.grossRevenue),
@@ -1527,28 +1162,48 @@ export async function exportDashboardReportAsPdf(
       value: fmtCurrency(report.totals.netRevenue),
     },
     {
-      label: "Total Company Net",
-      value: fmtCurrency(report.totals.companyNet),
-    },
-    {
-      label: "Total Technician Tips",
-      value: fmtCurrency(report.totals.totalTips),
-    },
-    {
       label: "Avg Revenue Per Job",
       value: fmtCurrency(report.totals.avgRevenuePerJob),
     },
     {
-      label: "Company Net Margin",
-      value: fmtPercent(report.totals.companyNetMarginPct),
+      label: "Total Deposits",
+      value: fmtCurrency(report.totals.totalDeposits),
     },
     {
       label: "Total Technician Commissions",
       value: fmtCurrency(report.totals.totalTechnicianCommissions),
     },
     {
-      label: "Total Deposits",
-      value: fmtCurrency(report.totals.totalDeposits),
+      label: "Tech Commission Margin",
+      value: fmtPercent(mk?.techCommissionMarginPct ?? 0),
+    },
+    {
+      label: "Total Technician Tips",
+      value: fmtCurrency(report.totals.totalTips),
+    },
+    {
+      label: "Total Company Net",
+      value: fmtCurrency(report.totals.companyNet),
+    },
+    {
+      label: "Company Net Margin",
+      value: fmtPercent(report.totals.companyNetMarginPct),
+    },
+    {
+      label: "Reviews Total",
+      value: fmtCurrency(mk?.reviewRecordsTotal ?? report.reviewTotals.totalReviewAmount),
+    },
+    {
+      label: "Total Jobs Done",
+      value: String(mk?.totalJobsDone ?? report.totals.totalJobsCompleted),
+    },
+    {
+      label: "Total Jobs Pending",
+      value: String(mk?.totalJobsPending ?? 0),
+    },
+    {
+      label: "Review Coverage",
+      value: fmtPercent(report.reviewTotals.reviewCapturePct),
     },
   ];
 

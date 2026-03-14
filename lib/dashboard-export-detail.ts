@@ -70,10 +70,29 @@ export function buildTechJobDetailSheet(
 
   const enc = (row: number, col: number) =>
     XS.utils.encode_cell({ r: row, c: col }) as string;
-  const set = (col: number, v: string | number, s: object = {}, z?: string) => {
+
+  const set = (
+    col: number,
+    v: string | number | null | undefined,
+    s: object = {},
+    z?: string,
+  ) => {
+    // Handle invalid values to prevent Excel corruption
+    let val = v;
+    let type: "n" | "s" = "s";
+
+    if (v === null || v === undefined) {
+      val = "";
+    } else if (typeof v === "number") {
+      if (isNaN(v) || !isFinite(v)) {
+        val = 0;
+      }
+      type = "n";
+    }
+
     const cell: Record<string, unknown> = {
-      v,
-      t: typeof v === "number" ? "n" : "s",
+      v: val,
+      t: type,
       s,
     };
     if (z) cell.z = z;
@@ -155,20 +174,20 @@ export function buildTechJobDetailSheet(
         ...base,
         alignment: { horizontal: "left", indent: 1 },
       });
-      set(2, job.gross, { ...num }, FMT_CURRENCY);
-      set(3, job.deposits, { ...num }, FMT_CURRENCY);
+      set(2, job.gross || 0, { ...num }, FMT_CURRENCY);
+      set(3, job.deposits || 0, { ...num }, FMT_CURRENCY);
       set(4, job.paymentStatus.toUpperCase(), ctr);
-      set(5, job.tip, { ...num }, FMT_CURRENCY);
-      set(6, job.parts, { ...num }, FMT_CURRENCY);
-      set(7, job.netAfterParts, { ...num }, FMT_CURRENCY);
-      set(8, job.techPay, { ...num }, FMT_CURRENCY);
+      set(5, job.tip || 0, { ...num }, FMT_CURRENCY);
+      set(6, job.parts || 0, { ...num }, FMT_CURRENCY);
+      set(7, job.netAfterParts || 0, { ...num }, FMT_CURRENCY);
+      set(8, job.techPay || 0, { ...num }, FMT_CURRENCY);
       set(
         9,
-        job.companyNet,
+        job.companyNet || 0,
         { ...num, font: { ...base.font, bold: true, color: { rgb: GREEN } } },
         FMT_CURRENCY,
       );
-      set(10, job.reviewAmount, { ...num }, FMT_CURRENCY);
+      set(10, job.reviewAmount || 0, { ...num }, FMT_CURRENCY);
       set(11, job.month, ctr);
       r++;
     }

@@ -1,16 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Database } from "@/database.types";
+import type {
+  DashboardTotals,
+  TechPerformanceRow,
+  MonthlyComparisonRow,
+  TechJobDetailGroup,
+  ReviewTotals,
+  ReviewBreakdownRow,
+  ReviewMonthlyRow,
+} from "@/lib/dashboard-export";
 
 export type ExportParams =
   Database["public"]["Functions"]["export_dashboard_report"]["Args"];
 
+/** Strongly-typed shape returned by the `export_dashboard_report` RPC. */
 export interface DashboardExportData {
-  monthlyRows?: Record<string, any>[];
-  technicianRows?: Record<string, any>[];
-  totals?: Record<string, any>;
-  reviewTotals?: Record<string, any>;
-  reviewTypeRows?: Record<string, any>[];
+  totals: DashboardTotals;
+  monthlyRows: MonthlyComparisonRow[];
+  technicianRows: TechPerformanceRow[];
+  techJobDetailGroups: TechJobDetailGroup[];
+  reviewTotals: ReviewTotals;
+  reviewTypeRows: ReviewBreakdownRow[];
+  paymentMethodRows: ReviewBreakdownRow[];
+  reviewTechnicianRows: ReviewBreakdownRow[];
+  reviewMonthlyRows: ReviewMonthlyRow[];
 }
 
 export type DashboardExport = DashboardExportData;
@@ -24,23 +38,30 @@ const fetchDashboardExport = async (
     throw new Error(error.message);
   }
 
-  // data is already a perfectly formatted JSON object!
+  if (data == null) return null;
+
+  // The RPC returns `{ json: { ... } }` — unwrap it.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const raw = data as any;
+  const payload = raw?.json ?? raw;
+
   // If Supabase returns an array, grab the first item.
-  // If it returns the JSON object directly, just return the object.
-  if (Array.isArray(data)) {
-    return (data[0] as DashboardExport) || null;
+  if (Array.isArray(payload)) {
+    const first = payload[0];
+    return (first?.json ?? first) as DashboardExport | null;
   }
-  return data as DashboardExport;
+
+  return payload as DashboardExport;
 };
 
 export const useDashboardExport = (params: ExportParams) => {
   return useQuery({
-    // Automatically refetch when any of these parameters change
     queryKey: ["export_dashboard_report", params],
     queryFn: () => fetchDashboardExport(params),
-    // Prevent the query from running if we don't have a company_id yet
     enabled: Boolean(params.p_company_id),
-    // Optional: Keep data fresh for 1 minute before refetching in the background
     staleTime: 1000 * 60,
   });
 };
+
+/** Imperative fetch — same RPC, no React hook. Used by the export button. */
+export const fetchExportData = fetchDashboardExport;
