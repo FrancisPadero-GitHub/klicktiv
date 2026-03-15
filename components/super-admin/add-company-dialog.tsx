@@ -27,7 +27,7 @@ export function AddCompanyDialog() {
   const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const createCompany = useCreateCompany();
+  const { mutate: createCompany, isPending } = useCreateCompany();
 
   const {
     register,
@@ -40,7 +40,7 @@ export function AddCompanyDialog() {
   const passwordValue = useWatch({ control, name: "password" });
 
   function onSubmit(values: FormValues) {
-    createCompany.mutate(
+    createCompany(
       {
         company_name: values.company_name.trim(),
         email: values.email.trim(),
@@ -110,7 +110,9 @@ export function AddCompanyDialog() {
                 })}
               />
               {errors.email && (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
+                <p className="text-xs text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -190,12 +192,13 @@ export function AddCompanyDialog() {
               <Button
                 type="button"
                 variant="outline"
+                disabled={isPending}
                 onClick={() => setOpen(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={createCompany.isPending}>
-                {createCompany.isPending && (
+              <Button type="submit" disabled={isPending}>
+                {isPending && (
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                 )}
                 Create
