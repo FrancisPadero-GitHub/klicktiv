@@ -11,7 +11,7 @@ import {
 import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { useFetchProfiles } from "@/hooks/auth/useFetchRole";
+import { useFetchProfiles } from "@/hooks/auth/useFetchProfiles";
 import { QueryStatePanel } from "@/components/misc/query-state-panel";
 import { CreateLoginCredentials } from "@/components/dashboard/settings/create-va";
 

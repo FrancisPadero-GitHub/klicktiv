@@ -1,11 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
-import { Eye, EyeOff, Shield, UserPlus } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Eye,
+  EyeOff,
+  Shield,
+  UserPlus,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -14,114 +25,103 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
-// components
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
-// hooks
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 import { useCreateUser } from "@/hooks/auth/useCreateCredentials";
 import {
   allProfilesQueryKey,
   useFetchProfiles,
-} from "@/hooks/auth/useFetchRole";
+} from "@/hooks/auth/useFetchProfiles";
 
-type Role = "user" | "admin";
+const formSchema = z
+  .object({
+    fname: z.string().min(1, "First name is required"),
+    lname: z.string().min(1, "Last name is required"),
+    email: z.email("Invalid email address"),
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .optional()
+      .or(z.literal("")),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
-type FormState = {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  role: Role;
-  fname: string;
-  lname: string;
-  username: string;
-};
-
-const initialFormState: FormState = {
-  email: "",
-  password: "",
-  confirmPassword: "",
-  role: "user",
-  fname: "",
-  lname: "",
-  username: "",
-};
+type FormValues = z.infer<typeof formSchema>;
 
 export function CreateLoginCredentials() {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<FormState>(initialFormState);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const createUserMutation = useCreateUser();
+
   const queryClient = useQueryClient();
   const { data: profiles } = useFetchProfiles();
 
-  const emailExists = Boolean(
-    profiles?.some(
-      (profile) =>
-        profile.email?.toLowerCase() === form.email.trim().toLowerCase(),
-    ),
-  );
+  // Destructure mutation with reset to clear errors on close
+  const {
+    mutateAsync: createUser,
+    isPending,
+    isError,
+    error,
+    reset: resetMutation,
+  } = useCreateUser();
 
-  const passwordsMatch = form.password === form.confirmPassword;
-  const showPasswordMismatch =
-    form.confirmPassword.length > 0 && !passwordsMatch;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      fname: "",
+      lname: "",
+      email: "",
+      username: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (!next) setForm(initialFormState);
+    if (!next) {
+      form.reset();
+      resetMutation(); // 1. Clears the "error" state from TanStack Query
+    }
   };
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (
-      !form.email.trim() ||
-      !form.password.trim() ||
-      !form.confirmPassword.trim() ||
-      !form.fname.trim() ||
-      !form.lname.trim()
-    ) {
-      toast.error("Please complete all required fields");
-      return;
-    }
-
-    if (!passwordsMatch) {
-      toast.error("Passwords do not match");
-      return;
-    }
+  const onSubmit = async (values: FormValues) => {
+    const emailExists = profiles?.some(
+      (p) => p.email?.toLowerCase() === values.email.trim().toLowerCase(),
+    );
 
     if (emailExists) {
-      toast.error("Email already exists");
-      return;
-    }
-
-    if (form.username.trim() && form.username.trim().length < 3) {
-      toast.error("Username must be at least 3 characters");
+      form.setError("email", { message: "Email already exists" });
       return;
     }
 
     try {
-      await createUserMutation.mutateAsync({
-        email: form.email.trim(),
-        password: form.password,
-        role: form.role,
-        f_name: form.fname.trim(),
-        l_name: form.lname.trim(),
-        username: form.username.trim() || undefined,
+      await createUser({
+        email: values.email.trim(),
+        password: values.password,
+        f_name: values.fname.trim(),
+        l_name: values.lname.trim(),
+        username: values.username?.trim() || undefined,
       });
 
+      // 2. Refresh the UI list
       await queryClient.invalidateQueries({ queryKey: allProfilesQueryKey });
-      toast.success("Login credentials created successfully");
       handleOpenChange(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to create login credentials",
-      );
+    } catch (err) {
+      // Errors are handled by the hook's toast.error and the local Alert below
+      console.error("Mutation failed:", err);
     }
   };
 
@@ -144,196 +144,192 @@ export function CreateLoginCredentials() {
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={(e) => {
-            void onSubmit(e);
-          }}
-          className="space-y-4"
-        >
-          <div className="grid gap-4 grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="credentials-fname">First Name</Label>
-              <Input
-                id="credentials-fname"
-                type="text"
-                placeholder="First name"
-                value={form.fname}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, fname: e.target.value }))
-                }
-                disabled={createUserMutation.isPending}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="credentials-lname">Last Name</Label>
-              <Input
-                id="credentials-lname"
-                type="text"
-                placeholder="Last name"
-                value={form.lname}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, lname: e.target.value }))
-                }
-                disabled={createUserMutation.isPending}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="credentials-email">Email</Label>
-              <Input
-                id="credentials-email"
-                type="email"
-                placeholder="user@company.com"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, email: e.target.value }))
-                }
-                disabled={createUserMutation.isPending}
-                required
-              />
-              {form.email.trim().length > 0 && emailExists && (
-                <p className="text-sm font-medium text-destructive">
-                  Email already exists
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="credentials-username">Username (optional)</Label>
-              <Input
-                id="credentials-username"
-                type="text"
-                placeholder="username"
-                value={form.username}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, username: e.target.value }))
-                }
-                disabled={createUserMutation.isPending}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="credentials-password">Password</Label>
-            <div className="relative">
-              <Input
-                id="credentials-password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                placeholder="Enter temporary password"
-                className="pr-10"
-                value={form.password}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, password: e.target.value }))
-                }
-                disabled={createUserMutation.isPending}
-                required
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                className="absolute top-1/2 right-2 -translate-y-1/2"
-                onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? <EyeOff /> : <Eye />}
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="credentials-confirm-password">
-              Confirm Password
-            </Label>
-            <div className="relative">
-              <Input
-                id="credentials-confirm-password"
-                type={showConfirmPassword ? "text" : "password"}
-                autoComplete="new-password"
-                placeholder="Re-enter password"
-                className="pr-10"
-                value={form.confirmPassword}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    confirmPassword: e.target.value,
-                  }))
-                }
-                disabled={createUserMutation.isPending}
-                required
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                className="absolute top-1/2 right-2 -translate-y-1/2"
-                onClick={() => setShowConfirmPassword((prev) => !prev)}
-                aria-label={
-                  showConfirmPassword
-                    ? "Hide confirm password"
-                    : "Show confirm password"
-                }
-              >
-                {showConfirmPassword ? <EyeOff /> : <Eye />}
-              </Button>
-            </div>
-            {showPasswordMismatch && (
-              <p className="text-sm font-medium text-destructive">
-                Passwords do not match
-              </p>
+        <Form {...form}>
+          <form
+            onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}
+            className="space-y-4"
+          >
+            {/* 3. Global Server Error Alert */}
+            {isError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Server Error</AlertTitle>
+                <AlertDescription>
+                  {error instanceof Error
+                    ? error.message
+                    : "Failed to create VA"}
+                </AlertDescription>
+              </Alert>
             )}
-          </div>
 
-          {/* <div className="space-y-2">
-            REMOVED ROLE SELECTION FOR NOW - ALL NEW USERS WILL BE CREATED AS "USER" ROLE
-            <Label htmlFor="credentials-role">Role</Label>
-            <Select
-              value={form.role}
-              onValueChange={(value: Role) =>
-                setForm((prev) => ({ ...prev, role: value }))
-              }
-              disabled={createUserMutation.isPending}
-            >
-              <SelectTrigger id="credentials-role" className="w-full">
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">User</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div> */}
+            <div className="grid gap-4 grid-cols-2">
+              <FormField
+                control={form.control}
+                name="fname"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="First name"
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lname"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Last name"
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
-            <Shield className="h-4 w-4 mt-0.5 shrink-0" />
-            Credentials are created through Supabase Edge Functions.
-          </div>
+            <div className="grid gap-4 grid-cols-2">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="va@company.com"
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username (optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="username"
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={createUserMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                createUserMutation.isPending ||
-                emailExists ||
-                showPasswordMismatch
-              }
-            >
-              {createUserMutation.isPending ? "Creating..." : "Create"}
-            </Button>
-          </div>
-        </form>
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        className="pr-10"
+                        placeholder="Enter password"
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        className="pr-10"
+                        placeholder="Re-enter password"
+                        {...field}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground flex items-start gap-2">
+              <Shield className="h-4 w-4 mt-0.5 shrink-0" />
+              Credentials are created through Supabase Edge Functions.
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending ? "Creating..." : "Create"}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

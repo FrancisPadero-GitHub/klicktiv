@@ -145,7 +145,12 @@ function UpdateCompanyDialog({
             Change the name of your company.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="company-name">Company Name</Label>
             <Input
@@ -239,7 +244,12 @@ function UpdatePasswordDialog() {
             Choose a strong password of at least 8 characters.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            void handleSubmit(e);
+          }}
+          className="space-y-4"
+        >
           <div className="space-y-2">
             <Label htmlFor="new-password">New Password</Label>
             <Input

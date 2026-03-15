@@ -38,7 +38,6 @@ export function useCreateUser() {
     mutationFn: async ({
       email,
       password,
-      role = "user", // not being used on the edge Function yet
       f_name,
       l_name,
       username,
@@ -70,7 +69,6 @@ export function useCreateUser() {
           email,
           password,
           company_id: companyId,
-          role,
           f_name,
           l_name,
           username,

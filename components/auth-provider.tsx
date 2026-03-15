@@ -12,7 +12,10 @@ import { supabase } from "@/lib/supabase";
 import { signOut as signOutApi } from "@/lib/auth";
 import { useUser } from "@/hooks/auth/useUser";
 import { AUTH_QUERY_KEY } from "@/hooks/auth/useLogin";
-import { fetchProfileById, profileQueryKey } from "@/hooks/auth/useFetchRole";
+import {
+  fetchProfileById,
+  profileQueryKey,
+} from "@/hooks/auth/useFetchProfiles";
 import type { AuthContextValue } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -42,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   // Refetches to the user id and company_id changes
+  // This is a protection in case a user is transfered to a company or something while on the application
   useEffect(() => {
     const userId = session?.user.id;
     const companyId = session?.user.app_metadata.company_id as
