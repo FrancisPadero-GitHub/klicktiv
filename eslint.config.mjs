@@ -20,6 +20,14 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "database.types.ts",
     "public/**",
+    "node_modules/",
+    "public/",
+    ".vscode/",
+    ".env*",
+    "tsconfig.tsbuildinfo",
+    "database.types.ts",
+    "coverage/",
+    "*.log",
   ]),
 
   {
